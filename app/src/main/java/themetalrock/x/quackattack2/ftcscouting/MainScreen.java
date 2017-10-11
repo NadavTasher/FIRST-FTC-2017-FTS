@@ -2,6 +2,7 @@ package themetalrock.x.quackattack2.ftcscouting;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -11,12 +12,15 @@ import android.text.Spanned;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.json.JSONException;
@@ -143,8 +147,22 @@ public class MainScreen extends Activity {
         LinearLayout main = new LinearLayout(getApplicationContext());
         main.setOrientation(LinearLayout.VERTICAL);
         main.setGravity(Gravity.CENTER);
+        //
+        LinearLayout loginView = new LinearLayout(getApplicationContext());
+        loginView.setOrientation(LinearLayout.VERTICAL);
+        loginView.setGravity(Gravity.CENTER);
+        //
+        LinearLayout loginSignupView = new LinearLayout(getApplicationContext());
+        loginSignupView.setOrientation(LinearLayout.HORIZONTAL);
+        loginSignupView.setGravity(Gravity.CENTER);
+        //
+        LinearLayout madebyView = new LinearLayout(getApplicationContext());
+        madebyView.setOrientation(LinearLayout.HORIZONTAL);
+        madebyView.setGravity(Gravity.CENTER);
+        //
         ImageView mainIcon, tmrIcon, qattIcon;
         final EditText loginName, loginPassword;
+        TextView madebyText;
         Button signup, login;
         //Initialize Widgets
         mainIcon = new ImageView(getApplicationContext());
@@ -154,7 +172,9 @@ public class MainScreen extends Activity {
         loginPassword = new EditText(getApplicationContext());
         signup = new Button(getApplicationContext());
         login = new Button(getApplicationContext());
+        madebyText=new TextView(getApplicationContext());
         //Assign Values
+        main.setBackgroundColor(color);
         mainIcon.setImageDrawable(getDrawable(R.drawable.ic_icon));
         tmrIcon.setImageDrawable(getDrawable(R.drawable.ic_themetalrock));
         qattIcon.setImageDrawable(getDrawable(R.drawable.ic_quackattack));
@@ -165,10 +185,56 @@ public class MainScreen extends Activity {
         loginPassword.setInputType(InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD);
         login.setText(R.string.login);
         signup.setText(R.string.signup);
+        madebyText.setText(R.string.madeby);
+        madebyText.setGravity(Gravity.CENTER);
+        madebyText.setTextSize(30);
+        madebyText.setTextColor(Color.BLACK);
+        //LayoutParams Setting
+        int icon_size= Light.Device.screenX(getApplicationContext())/4;
+        LinearLayout.LayoutParams genericIcon=new LinearLayout.LayoutParams(icon_size,icon_size);
+        mainIcon.setLayoutParams(genericIcon);
+        tmrIcon.setLayoutParams(genericIcon);
+        qattIcon.setLayoutParams(genericIcon);
+        //View Adding
+        loginSignupView.addView(signup);
+        loginSignupView.addView(login);
+        loginView.addView(loginName);
+        loginView.addView(loginPassword);
+        loginView.addView(loginSignupView);
+        main.addView(mainIcon);
+        main.addView(loginView);
+        main.addView(madebyText);
+        main.addView(madebyView);
+
         //OnClick Listeners
         login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Dialog loadingDialog=new Dialog(MainScreen.this);
+                LinearLayout loadingDialogLayout=new LinearLayout(getApplicationContext());
+                loadingDialogLayout.setGravity(Gravity.CENTER);
+                loadingDialogLayout.setOrientation(LinearLayout.HORIZONTAL);
+                ProgressBar loadingBar=new ProgressBar(getApplicationContext());
+                loadingBar.setIndeterminate(true);
+                ImageView loadedStatus=new ImageView(getApplicationContext());
+                int image_size= Light.Device.screenX(getApplicationContext())/6;
+                int dialog_size=image_size+ Light.Device.screenY(getApplicationContext())/20;
+                loadingBar.setLayoutParams(new LinearLayout.LayoutParams(image_size,image_size));
+                loadedStatus.setLayoutParams(new LinearLayout.LayoutParams(image_size,image_size));
+                loadingDialogLayout.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,dialog_size));
+                TextView loadingText=new TextView(getApplicationContext());
+                loadingText.setText(R.string.checking_conn_w_server);
+                //TODO add custom font to textview
+                loadingText.setTextSize(21);
+                loadingText.setTextColor(Color.WHITE);
+                loadingBar.setVisibility(View.VISIBLE);
+                loadedStatus.setVisibility(View.GONE);
+                loadingDialogLayout.addView(loadedStatus);
+                loadingDialogLayout.addView(loadingBar);
+                loadingDialogLayout.addView(loadingText);
+                loadingDialog.setCancelable(false);
+                loadingDialog.setContentView(loadingDialogLayout);
+                loadingDialog.show();
                 ArrayList<Light.Net.PHP.Post.PHPParameter> loginParameters = new ArrayList<>();
                 loginParameters.add(new Light.Net.PHP.Post.PHPParameter("login", loginName.getText().toString()));
                 loginParameters.add(new Light.Net.PHP.Post.PHPParameter("key", loginPassword.getText().toString()));
@@ -201,8 +267,10 @@ public class MainScreen extends Activity {
                 }).execute();
             }
         });
+        //Show The Main Login View
+        setContentView(main);
     }
-
     private void mainScreen() {
+        firstLogin();
     }
 }
