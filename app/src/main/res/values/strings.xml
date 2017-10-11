@@ -4,4 +4,5 @@
     <string name="signup">Sign Up</string>
     <string name="checking_conn_w_server">Checking Connection With Server</string>
     <string name="madeby">Made By</string>
+    <string name="with">&amp;</string>
 </resources>
