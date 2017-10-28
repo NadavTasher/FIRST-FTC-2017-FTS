@@ -1,0 +1,4 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--<item android:drawable="@drawable/ic_live_circle"/>-->
+    <item android:top="10dp" android:right="10dp" android:bottom="10dp" android:left="10dp" android:drawable="@drawable/ic_live_circle"/>
+</layer-list>

@@ -1,5 +1,6 @@
 package themetalrock.x.quackattack2.ftcscouting;
 
+import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -23,6 +24,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -36,28 +38,24 @@ import java.util.ArrayList;
 import nadav.tasher.lightool.Light;
 
 public class MainScreen extends Activity {
-    static final String errorCodeManual =
-            "Error Code Manual:\n" +
-                    "0-20 Connection Errors\n" +
-                    "20-40 JSON Errors, Server Response Errors\n" +
-                    "" +
-                    "" +
-                    "" +
-                    "" +
-                    "" +
-                    "" +
-                    "";
+    static final String errorCodeManual = "Error Code Manual:\n" + "0-20 Connection Errors\n" + "20-40 JSON Errors, Server Response Errors\n" + "" + "" + "" + "" + "" + "" + "";
     private final String serviceProvider = "http://ftc.thepuzik.com";
     private final String servicePush = serviceProvider + "/push/push.php";
     private final String serviceLogin = serviceProvider + "/sign/login.php";
     private final String serviceNews = serviceProvider + "/news/news.php";
     private SharedPreferences sp;
-    private int color = Color.parseColor("#7b4b9e");
+    private int color = Color.parseColor("#123789");
+    private int secolor = color + 0x333333;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         init();
+    }
+
+    private int remakeSecondColor() {
+        secolor = color + 0x333333;
+        return secolor;
     }
 
     private void checkCredentials() {
@@ -440,7 +438,6 @@ public class MainScreen extends Activity {
                         loginName.setError("Must Be 4-7 Characters");
                     }
                 }
-
             }
         });
         signup.setOnClickListener(new View.OnClickListener() {
@@ -584,6 +581,81 @@ public class MainScreen extends Activity {
 
     private void mainScreen() {
         //TODO actual stuff
-        splash();
+        LinearLayout fullScreen = new LinearLayout(this);
+        getWindow().setStatusBarColor(secolor);
+        final FrameLayout content = new FrameLayout(this);
+        final LinearLayout navbar = new LinearLayout(this);
+        final LinearLayout navbarItems = new LinearLayout(this);
+        final ImageView mainIcon = new ImageView(this);
+        final ImageView liveIcon = new ImageView(this);
+        final ImageView groupIcon = new ImageView(this);
+        final FrameLayout livePadder=new FrameLayout(this);
+        final int screenY = Light.Device.screenY(this);
+        final int nutSize = (screenY / 7) - screenY / 30;
+        final int newsSize = (screenY / 9) - screenY / 30;
+        final int navY = screenY / 8;
+        final LinearLayout.LayoutParams iconParms = new LinearLayout.LayoutParams(nutSize, nutSize);
+        final LinearLayout.LayoutParams smallIconParms = new LinearLayout.LayoutParams(newsSize, newsSize);
+        final LinearLayout.LayoutParams navParms = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, navY);
+        content.setBackgroundColor(color);
+        fullScreen.setOrientation(LinearLayout.VERTICAL);
+        fullScreen.setGravity(Gravity.START | Gravity.CENTER_HORIZONTAL);
+        fullScreen.setBackgroundColor(color);
+        navbar.setBackgroundColor(secolor);
+        navbar.setOrientation(LinearLayout.HORIZONTAL);
+        navbar.setGravity(Gravity.CENTER);
+        navbar.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+        mainIcon.setLayoutParams(iconParms);
+        mainIcon.setImageDrawable(getDrawable(R.drawable.ic_icon));
+        mainIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                AlertDialog.Builder ab = new AlertDialog.Builder(MainScreen.this);
+                ab.setTitle(R.string.app_name);
+                ab.setMessage("This App Was Made By:\nThe MetalRock #11633\nQuackAttack #11635\nVersion: " + Light.Device.getVersionName(getApplicationContext(), getPackageName()) + "\nBuild: " + Light.Device.getVersionCode(getApplicationContext(), getPackageName()));
+                ab.setCancelable(true);
+                ab.setPositiveButton("Close", null);
+                ab.show();
+            }
+        });
+        liveIcon.setLayoutParams(smallIconParms);
+        livePadder.setBackground(getDrawable(R.drawable.back));
+        liveIcon.setImageDrawable(getDrawable(R.drawable.ic_live));
+        liveIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //TODO go to live scores and updates(messages)
+            }
+        });
+        livePadder.addView(liveIcon);
+        ObjectAnimator liveFlash=ObjectAnimator.ofFloat(liveIcon,View.ALPHA, 1f,0.1f);
+        liveFlash.setDuration(800);
+        liveFlash.setRepeatMode(ObjectAnimator.REVERSE);
+        liveFlash.setRepeatCount(ObjectAnimator.INFINITE);
+        liveFlash.start();
+        groupIcon.setLayoutParams(smallIconParms);
+        groupIcon.setBackground(getDrawable(R.drawable.back));
+        groupIcon.setImageDrawable(getDrawable(R.drawable.ic_magnifying));
+        groupIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //TODO open search bar (slide, does not support RTL.)
+            }
+        });
+        navbarItems.setOrientation(LinearLayout.HORIZONTAL);
+        navbarItems.setGravity(Gravity.CENTER);
+        navbar.addView(navbarItems);
+        navbar.setPadding(10, 10, 10, 10);
+        navbar.setLayoutParams(navParms);
+        navbar.setGravity(Gravity.CENTER);
+        navbarItems.addView(livePadder);
+        navbarItems.addView(mainIcon);
+        navbarItems.addView(groupIcon);
+        fullScreen.addView(navbar);
+        fullScreen.addView(content);
+        setContentView(fullScreen);
+    }
+    private LinearLayout loadAccountData(){
+        return null;
     }
 }
