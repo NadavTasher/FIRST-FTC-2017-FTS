@@ -57,7 +57,9 @@ public class MainScreen extends Activity {
         secolor = color + 0x333333;
         return secolor;
     }
-
+    private Typeface getTypeface(){
+        return Typeface.createFromAsset(getAssets(), "ssp.ttf");
+    }
     private void checkCredentials() {
         ArrayList<Light.Net.PHP.Post.PHPParameter> loginParameters = new ArrayList<>();
         loginParameters.add(new Light.Net.PHP.Post.PHPParameter("login", sp.getString("account", "")));
@@ -219,7 +221,6 @@ public class MainScreen extends Activity {
         madebyText = new TextView(getApplicationContext());
         withText = new TextView(getApplicationContext());
         //Assign Values
-        final Typeface custom_font = Typeface.createFromAsset(getAssets(), "ssp.ttf");
         main.setBackground(getDrawable(R.drawable.login_gradient));
         mainIcon.setImageDrawable(getDrawable(R.drawable.ic_icon));
         tmrIcon.setImageDrawable(getDrawable(R.drawable.ic_themetalrock));
@@ -231,8 +232,8 @@ public class MainScreen extends Activity {
         loginName.setTextSize(25);
         loginPassword.setTextSize(21);
         loginPassword.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        loginName.setTypeface(custom_font);
-        loginPassword.setTypeface(custom_font);
+        loginName.setTypeface(getTypeface());
+        loginPassword.setTypeface(getTypeface());
         login.setText(R.string.login);
         signup.setText(R.string.signup);
         loginName.setHintTextColor(Color.parseColor("#9fb2e0"));
@@ -241,7 +242,7 @@ public class MainScreen extends Activity {
         loginPassword.setError("Must Use 6-16 Chars");
         loginName.setText(account);
         madebyText.setText(R.string.madeby);
-        madebyText.setTypeface(custom_font);
+        madebyText.setTypeface(getTypeface());
         madebyText.setGravity(Gravity.CENTER);
         madebyText.setTextSize(38);
         madebyText.setTextColor(Color.BLACK);
@@ -253,8 +254,8 @@ public class MainScreen extends Activity {
         signup.setBackground(getDrawable(R.drawable.button));
         login.setTextColor(Color.WHITE);
         signup.setTextColor(Color.WHITE);
-        login.setTypeface(custom_font);
-        signup.setTypeface(custom_font);
+        login.setTypeface(getTypeface());
+        signup.setTypeface(getTypeface());
         login.setTextSize(22);
         signup.setTextSize(22);
         login.setAllCaps(false);
@@ -352,7 +353,7 @@ public class MainScreen extends Activity {
                     loadingDialogLayout.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dialog_size));
                     final TextView loadingText = new TextView(getApplicationContext());
                     loadingText.setText(R.string.checking_conn_w_server);
-                    loadingText.setTypeface(custom_font);
+                    loadingText.setTypeface(getTypeface());
                     loadingText.setTextSize(21);
                     loadingText.setTextColor(Color.WHITE);
                     loadingBar.setVisibility(View.VISIBLE);
@@ -461,7 +462,7 @@ public class MainScreen extends Activity {
                     loadingDialogLayout.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dialog_size));
                     final TextView loadingText = new TextView(getApplicationContext());
                     loadingText.setText(R.string.checking_conn_w_server);
-                    loadingText.setTypeface(custom_font);
+                    loadingText.setTypeface(getTypeface());
                     loadingText.setTextSize(21);
                     loadingText.setTextColor(Color.WHITE);
                     loadingBar.setVisibility(View.VISIBLE);
@@ -598,6 +599,7 @@ public class MainScreen extends Activity {
         final LinearLayout.LayoutParams smallIconParms = new LinearLayout.LayoutParams(newsSize, newsSize);
         final LinearLayout.LayoutParams navParms = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, navY);
         content.setBackgroundColor(color);
+        content.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         fullScreen.setOrientation(LinearLayout.VERTICAL);
         fullScreen.setGravity(Gravity.START | Gravity.CENTER_HORIZONTAL);
         fullScreen.setBackgroundColor(color);
@@ -654,8 +656,36 @@ public class MainScreen extends Activity {
         fullScreen.addView(navbar);
         fullScreen.addView(content);
         setContentView(fullScreen);
+        loadAccountData(content);
     }
-    private LinearLayout loadAccountData(){
-        return null;
+    private void loadAccountData(FrameLayout content){
+        LinearLayout fullTable=new LinearLayout(getApplicationContext());
+        TextView noData=new TextView(getApplicationContext());
+        noData.setTypeface(getTypeface());
+        noData.setGravity(Gravity.CENTER);
+        noData.setTextSize(32);
+        noData.setText("No Data");
+        noData.setTextColor(Color.WHITE);
+        fullTable.addView(noData);
+        fullTable.setOrientation(LinearLayout.VERTICAL);
+        fullTable.setGravity(Gravity.CENTER);
+        ArrayList<Light.Net.PHP.Post.PHPParameter> loginParameters = new ArrayList<>();
+        loginParameters.add(new Light.Net.PHP.Post.PHPParameter("login", sp.getString("account","")));
+        loginParameters.add(new Light.Net.PHP.Post.PHPParameter("key",sp.getString("key","")));
+        loginParameters.add(new Light.Net.PHP.Post.PHPParameter("action", "load"));
+        loginParameters.add(new Light.Net.PHP.Post.PHPParameter("file", "scd"));
+        loginParameters.add(new Light.Net.PHP.Post.PHPParameter("filters", ""));
+        loginParameters.add(new Light.Net.PHP.Post.PHPParameter("version", String.valueOf(Light.Device.getVersionCode(getApplicationContext(), getPackageName()))));
+        new Light.Net.PHP.Post(serviceLogin, loginParameters, new Light.Net.PHP.Post.OnPost() {
+            @Override
+            public void onPost(String s) {
+                try {
+                    JSONObject response=new JSONObject(s);
+
+                } catch (JSONException e) {
+                    resetPopup("Failed Reading Date From Server",21);
+                }
+            }
+        }).execute();
     }
 }
