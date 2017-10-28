@@ -222,7 +222,6 @@ public class MainScreen extends Activity {
         withText = new TextView(getApplicationContext());
         //Assign Values
         final Typeface custom_font = Typeface.createFromAsset(getAssets(), "ssp.ttf");
-        //        main.setBackgroundColor(color);
         main.setBackground(getDrawable(R.drawable.login_gradient));
         mainIcon.setImageDrawable(getDrawable(R.drawable.ic_icon));
         tmrIcon.setImageDrawable(getDrawable(R.drawable.ic_themetalrock));
