@@ -614,7 +614,7 @@ public class MainScreen extends Activity {
             public void onClick(View view) {
                 AlertDialog.Builder ab = new AlertDialog.Builder(MainScreen.this);
                 ab.setTitle(R.string.app_name);
-                ab.setMessage("This App Was Made By:\nThe MetalRock #11633\nQuackAttack #11635\nVersion: " + Light.Device.getVersionName(getApplicationContext(), getPackageName()) + "\nBuild: " + Light.Device.getVersionCode(getApplicationContext(), getPackageName()));
+                ab.setMessage("This App Was Made By:\nNadav Tasher #11633\nShirelle Danon #11635\nVersion: " + Light.Device.getVersionName(getApplicationContext(), getPackageName()) + "\nBuild: " + Light.Device.getVersionCode(getApplicationContext(), getPackageName()));
                 ab.setCancelable(true);
                 ab.setPositiveButton("Close", null);
                 ab.show();
@@ -683,9 +683,11 @@ public class MainScreen extends Activity {
                     JSONObject response=new JSONObject(s);
 
                 } catch (JSONException e) {
-//                    resetPopup("Failed Reading Date From Server",21);
+                    resetPopup("Failed Reading Date From Server",21);
                 }
             }
         }).execute();
+        content.removeAllViews();
+        content.addView(fullTable);
     }
 }
