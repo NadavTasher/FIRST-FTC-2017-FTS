@@ -683,7 +683,7 @@ public class MainScreen extends Activity {
                     JSONObject response=new JSONObject(s);
 
                 } catch (JSONException e) {
-                    resetPopup("Failed Reading Date From Server",21);
+//                    resetPopup("Failed Reading Date From Server",21);
                 }
             }
         }).execute();
