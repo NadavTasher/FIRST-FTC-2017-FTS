@@ -584,6 +584,7 @@ public class MainScreen extends Activity {
         //TODO actual stuff
         LinearLayout fullScreen = new LinearLayout(this);
         getWindow().setStatusBarColor(secolor);
+        getWindow().setNavigationBarColor(color);
         final FrameLayout content = new FrameLayout(this);
         final LinearLayout navbar = new LinearLayout(this);
         final LinearLayout navbarItems = new LinearLayout(this);
