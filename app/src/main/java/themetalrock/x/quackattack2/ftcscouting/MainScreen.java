@@ -44,7 +44,7 @@ public class MainScreen extends Activity {
     private final String serviceLogin = serviceProvider + "/sign/login.php";
     private final String serviceNews = serviceProvider + "/news/news.php";
     private SharedPreferences sp;
-    private int color = Color.parseColor("#123789");
+    private int color = Color.parseColor("#ccc4a6");
     private int secolor = color + 0x333333;
 
     @Override
