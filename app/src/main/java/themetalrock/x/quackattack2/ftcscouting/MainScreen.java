@@ -30,6 +30,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -48,7 +49,7 @@ public class MainScreen extends Activity {
     private final String serviceNews = serviceProvider + "/news/news.php";
     private final String client="FTCAndroid";
     private SharedPreferences sp;
-    private int color = Color.parseColor("#ccc4a6");
+    private int color = Color.parseColor("#6ba593");
     private int secolor = color + 0x333333;
 
     @Override
@@ -598,6 +599,8 @@ public class MainScreen extends Activity {
         final ImageView liveIcon = new ImageView(this);
         final ImageView groupIcon = new ImageView(this);
         final FrameLayout livePadder=new FrameLayout(this);
+        ScrollView contentScroll=new ScrollView(this);
+        contentScroll.addView(content);
         final int screenY = Light.Device.screenY(this);
         final int nutSize = (screenY / 7) - screenY / 30;
         final int newsSize = (screenY / 9) - screenY / 30;
@@ -661,9 +664,28 @@ public class MainScreen extends Activity {
         navbarItems.addView(mainIcon);
         navbarItems.addView(groupIcon);
         fullScreen.addView(navbar);
-        fullScreen.addView(content);
+        fullScreen.addView(contentScroll);
         setContentView(fullScreen);
         loadAccountData(content);
+    }
+    private void openSearch(FrameLayout content){
+        LinearLayout fullSearch=new LinearLayout(this);
+        LinearLayout searchBar=new LinearLayout(this);
+        LinearLayout results=new LinearLayout(this);
+        fullSearch.setOrientation(LinearLayout.VERTICAL);
+        fullSearch.setGravity(Gravity.CENTER_HORIZONTAL|Gravity.START);
+        results.setOrientation(LinearLayout.VERTICAL);
+        results.setGravity(Gravity.CENTER_HORIZONTAL|Gravity.START);
+        searchBar.setOrientation(LinearLayout.HORIZONTAL);
+        searchBar.setGravity(Gravity.CENTER);
+        TextView comment=new TextView(this);
+        comment.setTypeface(getTypeface());
+        comment.setTextSize(40);
+        comment.setTextColor(Color.WHITE);
+        comment.setText("Search By:\nID e.g. 11633\nName e.g. MetalRock");
+        EditText search=new EditText(this);
+        search.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
     }
     private void loadAccountData(FrameLayout content){
         final LinearLayout fullTable=new LinearLayout(getApplicationContext());
@@ -771,13 +793,18 @@ public class MainScreen extends Activity {
         LinearLayout group=new LinearLayout(this);
         LinearLayout row1=new LinearLayout(this);
         LinearLayout row2=new LinearLayout(this);
+        LinearLayout row2right=new LinearLayout(this);
+        LinearLayout.LayoutParams buttonParms=new LinearLayout.LayoutParams(Light.Device.screenX(this)/3,Light.Device.screenY(this)/12);
         group.setOrientation(LinearLayout.VERTICAL);
         row1.setOrientation(LinearLayout.HORIZONTAL);
         row2.setOrientation(LinearLayout.HORIZONTAL);
+        row2right.setOrientation(LinearLayout.HORIZONTAL);
+        group.setPadding(20,20,20,20);
         group.setGravity(Gravity.CENTER);
         row1.setGravity(Gravity.CENTER_HORIZONTAL|Gravity.BOTTOM);
         row1.setPadding(10,10,10,10);
         row2.setGravity(Gravity.CENTER);
+        row2right.setGravity(Gravity.CENTER_VERTICAL|Gravity.END);
         TextView gid=new TextView(this),aka=new TextView(this);
         Button remove=new Button(this),more=new Button(this);
         gid.setText("#"+id);
@@ -791,16 +818,28 @@ public class MainScreen extends Activity {
         row1.addView(gid);
         row1.addView(aka);
         remove.setText("Remove");
-        remove.setBackgroundColor(Color.TRANSPARENT);
+        remove.setBackground(getDrawable(R.drawable.button));
         remove.setTypeface(getTypeface());
+        remove.setTextSize(25);
+        remove.setPadding(10,10,10,10);
+        remove.setTextColor(Color.parseColor("#bb2222"));
+        remove.setAllCaps(false);
+        remove.setLayoutParams(buttonParms);
         more.setText("More");
-        more.setBackgroundColor(Color.TRANSPARENT);
+        more.setTextColor(Color.parseColor("#2222bb"));
+        more.setAllCaps(false);
+        more.setBackground(getDrawable(R.drawable.button));
         more.setTypeface(getTypeface());
+        more.setTextSize(25);
+        more.setPadding(10,10,10,10);
+        more.setLayoutParams(buttonParms);
         row2.addView(remove);
-        row2.addView(more);
+        row2right.addView(more);
         group.addView(row1);
         group.addView(row2);
-        group.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Light.Device.screenY(this)/6));
+        row2.addView(row2right);
+        row2right.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        group.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Light.Device.screenY(this)/5));
         group.setBackground(getDrawable(R.drawable.back_2));
         setAkaOnTextView(aka,id);
         return group;
