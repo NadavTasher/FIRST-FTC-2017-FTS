@@ -52,7 +52,7 @@ public class MainScreen extends Activity {
     private final String serviceNews = serviceProvider + "/news/news.php";
     private final String client = "FTSAndroid";
     private SharedPreferences sp;
-    private int color = Color.parseColor("#6ba593");
+    private int color = Color.parseColor("#041228");
     private int secolor = color + 0x333333;
     private JSONArray alreadyScouting;
     private ImageView groupIcon;
@@ -813,9 +813,21 @@ public class MainScreen extends Activity {
         noData.setTextSize(32);
         noData.setText("No Data");
         noData.setTextColor(Color.WHITE);
-        Button addGroups=new Button(this);
+        final Button addGroups=new Button(this);
         //TODO add That button
-        fullTable.addView(noData);
+        addGroups.setText("Add Team To Scouting List");
+        addGroups.setBackground(getDrawable(R.drawable.back_2));
+        addGroups.setTextColor(Color.parseColor("#22dd22"));
+        addGroups.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Light.Device.screenY(this)/10));
+        addGroups.setTextSize(25);
+        addGroups.setTypeface(getTypeface());
+        addGroups.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openSearch(content);
+            }
+        });
+        fullTable.addView(addGroups);
         fullTable.setOrientation(LinearLayout.VERTICAL);
         fullTable.setGravity(Gravity.CENTER);
         ArrayList<Light.Net.PHP.Post.PHPParameter> readFilePara = new ArrayList<>();
@@ -842,6 +854,7 @@ public class MainScreen extends Activity {
                         for (int g = 0; g < groups.length(); g++) {
                             fullTable.addView(getGroupListView(groups.getString(g),content));
                         }
+                        fullTable.addView(addGroups);
                     }
                 } catch (JSONException e) {
                     resetPopup("Failed Reading Data From Server", 21);
@@ -956,7 +969,7 @@ public class MainScreen extends Activity {
                 for (int t = 0; t < alreadyScouting.length(); t++) {
                     if (alreadyScouting.getString(t).equals(id)) {
                         add.setVisibility(View.GONE);
-                        group.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Light.Device.screenY(this) / 10));
+                        group.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Light.Device.screenY(this) / 9));
                         break;
                     }
                 }
