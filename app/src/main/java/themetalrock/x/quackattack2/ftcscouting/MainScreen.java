@@ -487,7 +487,7 @@ public class MainScreen extends Activity {
                 String text = loginName.getText().toString();
                 String text2 = loginPassword.getText().toString();
                 String text3 = extraName.getText().toString();
-                if (text.length() >= 4 && text.length() <= 7 && text2.length() >= 6 && text2.length() <= 16 && text3.length()!=0) {
+                if (text.length() >= 4 && text.length() <= 7 && text2.length() >= 6 && text2.length() <= 16 && text3.length() != 0) {
                     final Dialog loadingDialog = new Dialog(MainScreen.this);
                     LinearLayout loadingDialogLayout = new LinearLayout(getApplicationContext());
                     loadingDialogLayout.setPadding(10, 10, 10, 10);
@@ -613,9 +613,9 @@ public class MainScreen extends Activity {
                     } else {
                         loginName.setError("Must Be 4-7 Characters");
                     }
-                    if(extraName.getText().toString().length()==0){
+                    if (extraName.getText().toString().length() == 0) {
                         extraName.setError("Must Not Be Empty");
-                    }else{
+                    } else {
                         extraName.setError(null);
                     }
                 }
@@ -935,29 +935,7 @@ public class MainScreen extends Activity {
             public void onClick(View v) {
                 final JSONArray array = new JSONArray();
                 array.put(id);
-                final ArrayList<Light.Net.PHP.Post.PHPParameter> writeData = new ArrayList<>();
-                writeData.add(new Light.Net.PHP.Post.PHPParameter("login", sp.getString("account", "")));
-                writeData.add(new Light.Net.PHP.Post.PHPParameter("key", sp.getString("key", "")));
-                writeData.add(new Light.Net.PHP.Post.PHPParameter("action", "write"));
-                writeData.add(new Light.Net.PHP.Post.PHPParameter("tag", "groups"));
-                writeData.add(new Light.Net.PHP.Post.PHPParameter("file", "scd"));
-                writeData.add(new Light.Net.PHP.Post.PHPParameter("version", String.valueOf(Light.Device.getVersionCode(getApplicationContext(), getPackageName()))));
-                final Light.Net.PHP.Post writeNew = new Light.Net.PHP.Post(serviceLogin, writeData, new Light.Net.PHP.Post.OnPost() {
-                    @Override
-                    public void onPost(String s) {
-                        try {
-                            JSONObject response = new JSONObject(s);
-                            boolean success = response.getBoolean("success");
-                            if (success) {
-                                if (response.getBoolean("wrote")) {
-                                    loadAccountData(content);
-                                }
-                            }
-                        } catch (JSONException e) {
-                            resetPopup("Failed Reading Date From Server", 23);
-                        }
-                    }
-                });
+                Log.d("ADD", array.toString());
                 ArrayList<Light.Net.PHP.Post.PHPParameter> readFilePara = new ArrayList<>();
                 readFilePara.add(new Light.Net.PHP.Post.PHPParameter("login", sp.getString("account", "")));
                 readFilePara.add(new Light.Net.PHP.Post.PHPParameter("key", sp.getString("key", "")));
@@ -979,12 +957,11 @@ public class MainScreen extends Activity {
                                 for (int g = 0; g < myarr.length(); g++) {
                                     array.put(myarr.get(g));
                                 }
-                                writeData.add(new Light.Net.PHP.Post.PHPParameter("value", array.toString()));
-                                writeNew.execute();
+                                saveGroups(array, content);
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
-                            resetPopup(e.toString(),25);
+                            resetPopup(e.toString(), 25);
                         }
                     }
                 });
@@ -1005,10 +982,9 @@ public class MainScreen extends Activity {
                             if (success) {
                                 if (o.getString("file").equals("scd")) {
                                     getGroups.execute();
-                                } else {
-                                    writeData.add(new Light.Net.PHP.Post.PHPParameter("value", array.toString()));
-                                    writeNew.execute();
                                 }
+                            } else {
+                                saveGroups(array, content);
                             }
                         } catch (JSONException e) {
                             resetPopup("Failed Reading Date From Server", 22);
@@ -1019,6 +995,33 @@ public class MainScreen extends Activity {
         });
         setAkaOnTextView(aka, id);
         return group;
+    }
+
+    private void saveGroups(JSONArray array, final FrameLayout content) {
+        final ArrayList<Light.Net.PHP.Post.PHPParameter> writeData = new ArrayList<>();
+        writeData.add(new Light.Net.PHP.Post.PHPParameter("login", sp.getString("account", "")));
+        writeData.add(new Light.Net.PHP.Post.PHPParameter("key", sp.getString("key", "")));
+        writeData.add(new Light.Net.PHP.Post.PHPParameter("action", "write"));
+        writeData.add(new Light.Net.PHP.Post.PHPParameter("tag", "groups"));
+        writeData.add(new Light.Net.PHP.Post.PHPParameter("value", array.toString()));
+        writeData.add(new Light.Net.PHP.Post.PHPParameter("file", "scd"));
+        writeData.add(new Light.Net.PHP.Post.PHPParameter("version", String.valueOf(Light.Device.getVersionCode(getApplicationContext(), getPackageName()))));
+        new Light.Net.PHP.Post(serviceLogin, writeData, new Light.Net.PHP.Post.OnPost() {
+            @Override
+            public void onPost(String s) {
+                try {
+                    JSONObject response = new JSONObject(s);
+                    boolean success = response.getBoolean("success");
+                    if (success) {
+                        if (response.getBoolean("wrote")) {
+                            loadAccountData(content);
+                        }
+                    }
+                } catch (JSONException e) {
+                    resetPopup("Failed Reading Date From Server", 23);
+                }
+            }
+        }).execute();
     }
 
     LinearLayout getGroupListView(String id) {
