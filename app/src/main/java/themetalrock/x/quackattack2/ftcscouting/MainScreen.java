@@ -9,6 +9,8 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.shapes.RectShape;
+import android.graphics.drawable.shapes.Shape;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
@@ -30,6 +32,7 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -43,6 +46,7 @@ public class MainScreen extends Activity {
     private final String servicePush = serviceProvider + "/push/push.php";
     private final String serviceLogin = serviceProvider + "/sign/login.php";
     private final String serviceNews = serviceProvider + "/news/news.php";
+    private final String client="FTCAndroid";
     private SharedPreferences sp;
     private int color = Color.parseColor("#ccc4a6");
     private int secolor = color + 0x333333;
@@ -368,6 +372,7 @@ public class MainScreen extends Activity {
                     loginParameters.add(new Light.Net.PHP.Post.PHPParameter("login", loginName.getText().toString()));
                     loginParameters.add(new Light.Net.PHP.Post.PHPParameter("key", loginPassword.getText().toString()));
                     loginParameters.add(new Light.Net.PHP.Post.PHPParameter("action", "verifyCred"));
+                    loginParameters.add(new Light.Net.PHP.Post.PHPParameter("client", client));
                     loginParameters.add(new Light.Net.PHP.Post.PHPParameter("version", String.valueOf(Light.Device.getVersionCode(getApplicationContext(), getPackageName()))));
                     new Light.Net.PHP.Post(serviceLogin, loginParameters, new Light.Net.PHP.Post.OnPost() {
                         @Override
@@ -477,6 +482,7 @@ public class MainScreen extends Activity {
                     loginParameters.add(new Light.Net.PHP.Post.PHPParameter("login", loginName.getText().toString()));
                     loginParameters.add(new Light.Net.PHP.Post.PHPParameter("key", loginPassword.getText().toString()));
                     loginParameters.add(new Light.Net.PHP.Post.PHPParameter("action", "signup"));
+                    loginParameters.add(new Light.Net.PHP.Post.PHPParameter("client", client));
                     loginParameters.add(new Light.Net.PHP.Post.PHPParameter("version", String.valueOf(Light.Device.getVersionCode(getApplicationContext(), getPackageName()))));
                     new Light.Net.PHP.Post(serviceLogin, loginParameters, new Light.Net.PHP.Post.OnPost() {
                         @Override
@@ -660,7 +666,7 @@ public class MainScreen extends Activity {
         loadAccountData(content);
     }
     private void loadAccountData(FrameLayout content){
-        LinearLayout fullTable=new LinearLayout(getApplicationContext());
+        final LinearLayout fullTable=new LinearLayout(getApplicationContext());
         TextView noData=new TextView(getApplicationContext());
         noData.setTypeface(getTypeface());
         noData.setGravity(Gravity.CENTER);
@@ -670,25 +676,157 @@ public class MainScreen extends Activity {
         fullTable.addView(noData);
         fullTable.setOrientation(LinearLayout.VERTICAL);
         fullTable.setGravity(Gravity.CENTER);
-        ArrayList<Light.Net.PHP.Post.PHPParameter> loginParameters = new ArrayList<>();
-        loginParameters.add(new Light.Net.PHP.Post.PHPParameter("login", sp.getString("account","")));
-        loginParameters.add(new Light.Net.PHP.Post.PHPParameter("key",sp.getString("key","")));
-        loginParameters.add(new Light.Net.PHP.Post.PHPParameter("action", "load"));
-        loginParameters.add(new Light.Net.PHP.Post.PHPParameter("file", "scd"));
-        loginParameters.add(new Light.Net.PHP.Post.PHPParameter("filters", ""));
-        loginParameters.add(new Light.Net.PHP.Post.PHPParameter("version", String.valueOf(Light.Device.getVersionCode(getApplicationContext(), getPackageName()))));
-        new Light.Net.PHP.Post(serviceLogin, loginParameters, new Light.Net.PHP.Post.OnPost() {
+        ArrayList<Light.Net.PHP.Post.PHPParameter> readFilePara = new ArrayList<>();
+        readFilePara.add(new Light.Net.PHP.Post.PHPParameter("login", sp.getString("account","")));
+        readFilePara.add(new Light.Net.PHP.Post.PHPParameter("key",sp.getString("key","")));
+        readFilePara.add(new Light.Net.PHP.Post.PHPParameter("action", "read"));
+        readFilePara.add(new Light.Net.PHP.Post.PHPParameter("tag", "groups"));
+        readFilePara.add(new Light.Net.PHP.Post.PHPParameter("file", "scd"));
+        readFilePara.add(new Light.Net.PHP.Post.PHPParameter("filters", ""));
+        readFilePara.add(new Light.Net.PHP.Post.PHPParameter("client", client));
+        readFilePara.add(new Light.Net.PHP.Post.PHPParameter("version", String.valueOf(Light.Device.getVersionCode(getApplicationContext(), getPackageName()))));
+        final Light.Net.PHP.Post getGroups=new Light.Net.PHP.Post(serviceLogin, readFilePara, new Light.Net.PHP.Post.OnPost() {
             @Override
             public void onPost(String s) {
                 try {
                     JSONObject response=new JSONObject(s);
-
+                    boolean success=response.getBoolean("success");
+                    if(success){
+                        fullTable.removeAllViews();
+                        fullTable.setGravity(Gravity.TOP|Gravity.CENTER_HORIZONTAL);
+                        String result=response.getString("result");
+                        JSONArray groups=new JSONArray(result);
+                        for(int g=0;g<groups.length();g++){
+                            fullTable.addView(getGroupListView(groups.getString(g)));
+                        }
+                    }
                 } catch (JSONException e) {
                     resetPopup("Failed Reading Date From Server",21);
                 }
             }
+        });
+        ArrayList<Light.Net.PHP.Post.PHPParameter> checkFilePara = new ArrayList<>();
+        checkFilePara.add(new Light.Net.PHP.Post.PHPParameter("login", sp.getString("account","")));
+        checkFilePara.add(new Light.Net.PHP.Post.PHPParameter("key",sp.getString("key","")));
+        checkFilePara.add(new Light.Net.PHP.Post.PHPParameter("action", "checkFile"));
+        checkFilePara.add(new Light.Net.PHP.Post.PHPParameter("file", "scd"));
+        checkFilePara.add(new Light.Net.PHP.Post.PHPParameter("filters", ""));
+        checkFilePara.add(new Light.Net.PHP.Post.PHPParameter("client", client));
+        checkFilePara.add(new Light.Net.PHP.Post.PHPParameter("version", String.valueOf(Light.Device.getVersionCode(getApplicationContext(), getPackageName()))));
+        new Light.Net.PHP.Post(serviceLogin, checkFilePara, new Light.Net.PHP.Post.OnPost() {
+            @Override
+            public void onPost(String s) {
+                try {
+                    JSONObject o=new JSONObject(s);
+                    boolean success=o.getBoolean("success");
+                    if(success){
+                        if(o.getString("file").equals("scd")){
+                            getGroups.execute();
+                        }
+                    }
+                } catch (JSONException e) {
+                    resetPopup("Failed Reading Date From Server",22);
+                }
+            }
         }).execute();
+        noData.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                JSONArray groups=new JSONArray();
+                groups.put("11344");
+                groups.put("16332");
+                groups.put("11235");
+                groups.put("45351");
+                ArrayList<Light.Net.PHP.Post.PHPParameter> readFilePara = new ArrayList<>();
+                readFilePara.add(new Light.Net.PHP.Post.PHPParameter("login", sp.getString("account","")));
+                readFilePara.add(new Light.Net.PHP.Post.PHPParameter("key",sp.getString("key","")));
+                readFilePara.add(new Light.Net.PHP.Post.PHPParameter("action", "write"));
+                readFilePara.add(new Light.Net.PHP.Post.PHPParameter("tag", "groups"));
+                readFilePara.add(new Light.Net.PHP.Post.PHPParameter("file", "scd"));
+                readFilePara.add(new Light.Net.PHP.Post.PHPParameter("value", groups.toString()));
+                readFilePara.add(new Light.Net.PHP.Post.PHPParameter("version", String.valueOf(Light.Device.getVersionCode(getApplicationContext(), getPackageName()))));
+                new Light.Net.PHP.Post(serviceLogin, readFilePara, new Light.Net.PHP.Post.OnPost() {
+                    @Override
+                    public void onPost(String s) {
+                        try {
+                            JSONObject response=new JSONObject(s);
+                            boolean success=response.getBoolean("success");
+                            if(success){
+                                if(response.getBoolean("wrote")){
+                                    resetPopup("Wrote Data!",-20);
+                                }
+                            }
+                        } catch (JSONException e) {
+                            resetPopup("Failed Reading Date From Server",23);
+                        }
+                    }
+                }).execute();
+            }
+        });
+        fullTable.setPadding(20,20,20,20);
         content.removeAllViews();
         content.addView(fullTable);
+    }
+    LinearLayout getGroupListView(String id){
+        LinearLayout group=new LinearLayout(this);
+        LinearLayout row1=new LinearLayout(this);
+        LinearLayout row2=new LinearLayout(this);
+        group.setOrientation(LinearLayout.VERTICAL);
+        row1.setOrientation(LinearLayout.HORIZONTAL);
+        row2.setOrientation(LinearLayout.HORIZONTAL);
+        group.setGravity(Gravity.CENTER);
+        row1.setGravity(Gravity.CENTER_HORIZONTAL|Gravity.BOTTOM);
+        row1.setPadding(10,10,10,10);
+        row2.setGravity(Gravity.CENTER);
+        TextView gid=new TextView(this),aka=new TextView(this);
+        Button remove=new Button(this),more=new Button(this);
+        gid.setText("#"+id);
+        gid.setTypeface(getTypeface());
+        gid.setTextSize(40);
+        gid.setTextColor(Color.WHITE);
+        aka.setText(null);
+        aka.setTypeface(getTypeface());
+        aka.setTextSize(24);
+        aka.setTextColor(Color.WHITE-0x222222);
+        row1.addView(gid);
+        row1.addView(aka);
+        remove.setText("Remove");
+        remove.setBackgroundColor(Color.TRANSPARENT);
+        remove.setTypeface(getTypeface());
+        more.setText("More");
+        more.setBackgroundColor(Color.TRANSPARENT);
+        more.setTypeface(getTypeface());
+        row2.addView(remove);
+        row2.addView(more);
+        group.addView(row1);
+        group.addView(row2);
+        group.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Light.Device.screenY(this)/6));
+        group.setBackground(getDrawable(R.drawable.back_2));
+        setAkaOnTextView(aka,id);
+        return group;
+    }
+    void setAkaOnTextView(final TextView aka,String id){
+        if(aka.getText().toString().equals("")){
+            final String soFar=" aka ";
+            ArrayList<Light.Net.PHP.Post.PHPParameter> akaGet = new ArrayList<>();
+            akaGet.add(new Light.Net.PHP.Post.PHPParameter("login", id));
+            akaGet.add(new Light.Net.PHP.Post.PHPParameter("action", "readPublic"));
+            akaGet.add(new Light.Net.PHP.Post.PHPParameter("tag", "name"));
+            akaGet.add(new Light.Net.PHP.Post.PHPParameter("version", String.valueOf(Light.Device.getVersionCode(getApplicationContext(), getPackageName()))));
+            new Light.Net.PHP.Post(serviceLogin, akaGet, new Light.Net.PHP.Post.OnPost() {
+                @Override
+                public void onPost(String s) {
+                    try {
+                        JSONObject result = new JSONObject(s);
+
+                        if(result.getBoolean("success")){
+                            aka.setText(soFar+result.getString("result"));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).execute();
+        }
     }
 }
