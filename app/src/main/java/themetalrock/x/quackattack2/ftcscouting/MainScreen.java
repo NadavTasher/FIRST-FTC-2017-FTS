@@ -56,6 +56,8 @@ public class MainScreen extends Activity {
     private int secolor = color + 0x333333;
     private JSONArray alreadyScouting;
     private ImageView groupIcon;
+    int textBlack=Color.WHITE;
+    int textWhite=Color.WHITE;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -274,9 +276,12 @@ public class MainScreen extends Activity {
         extraName.setTypeface(getTypeface());
         login.setText(R.string.login);
         signup.setText(R.string.signup);
-        loginName.setHintTextColor(Color.BLACK);
-        loginPassword.setHintTextColor(Color.BLACK);
-        extraName.setHintTextColor(Color.BLACK);
+        loginName.setHintTextColor(textBlack);
+        loginPassword.setHintTextColor(textBlack);
+        extraName.setHintTextColor(textBlack);
+        loginName.setTextColor(textBlack);
+        loginPassword.setTextColor(textBlack);
+        extraName.setTextColor(textBlack);
         loginName.setGravity(Gravity.CENTER);
         loginPassword.setGravity(Gravity.CENTER);
         extraName.setGravity(Gravity.CENTER);
@@ -286,11 +291,11 @@ public class MainScreen extends Activity {
         madebyText.setTypeface(getTypeface());
         madebyText.setGravity(Gravity.CENTER);
         madebyText.setTextSize(38);
-        madebyText.setTextColor(Color.BLACK);
+        madebyText.setTextColor(textBlack);
         withText.setText(R.string.with);
         withText.setGravity(Gravity.CENTER);
         withText.setTextSize(60);
-        withText.setTextColor(Color.BLACK);
+        withText.setTextColor(textBlack);
         login.setBackground(getDrawable(R.drawable.button));
         signup.setBackground(getDrawable(R.drawable.button));
         login.setTextColor(Color.WHITE);
