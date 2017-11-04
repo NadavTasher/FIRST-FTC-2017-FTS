@@ -20,10 +20,12 @@ import android.text.Spanned;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -46,8 +48,9 @@ public class MainScreen extends Activity {
     private final String serviceProvider = "http://ftc.thepuzik.com";
     private final String servicePush = serviceProvider + "/push/push.php";
     private final String serviceLogin = serviceProvider + "/sign/login.php";
+    private final String serviceSearch = serviceProvider + "/sign/search.php";
     private final String serviceNews = serviceProvider + "/news/news.php";
-    private final String client="FTCAndroid";
+    private final String client = "FTCAndroid";
     private SharedPreferences sp;
     private int color = Color.parseColor("#6ba593");
     private int secolor = color + 0x333333;
@@ -62,9 +65,11 @@ public class MainScreen extends Activity {
         secolor = color + 0x333333;
         return secolor;
     }
-    private Typeface getTypeface(){
+
+    private Typeface getTypeface() {
         return Typeface.createFromAsset(getAssets(), "ssp.ttf");
     }
+
     private void checkCredentials() {
         ArrayList<Light.Net.PHP.Post.PHPParameter> loginParameters = new ArrayList<>();
         loginParameters.add(new Light.Net.PHP.Post.PHPParameter("login", sp.getString("account", "")));
@@ -167,6 +172,27 @@ public class MainScreen extends Activity {
                 return null;
             }
         };
+        InputFilter teamNameFilter = new InputFilter() {
+
+            @Override
+            public CharSequence filter(CharSequence charSequence, int i, int i1, Spanned spanned, int i2, int i3) {
+                if (charSequence != null) {
+                    for (int c = 0; c < charSequence.length(); c++) {
+                        boolean charAllowed = false;
+                        String allowed = "0123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM ";
+                        for (int a = 0; a < allowed.length(); a++) {
+                            if (charSequence.charAt(c) == allowed.charAt(a)) {
+                                charAllowed = true;
+                                break;
+                            }
+                        }
+                        if (!charAllowed) return "";
+                    }
+                    return null;
+                }
+                return null;
+            }
+        };
         InputFilter groupIDfilter = new InputFilter() {
 
             @Override
@@ -212,7 +238,7 @@ public class MainScreen extends Activity {
         madebyView.setGravity(Gravity.CENTER);
         //
         ImageView mainIcon, tmrIcon, qattIcon;
-        final EditText loginName, loginPassword;
+        final EditText loginName, loginPassword, extraName;
         TextView madebyText, withText;
         final Button signup, login;
         //Initialize Widgets
@@ -221,6 +247,7 @@ public class MainScreen extends Activity {
         qattIcon = new ImageView(getApplicationContext());
         loginName = new EditText(getApplicationContext());
         loginPassword = new EditText(getApplicationContext());
+        extraName = new EditText(getApplicationContext());
         signup = new Button(getApplicationContext());
         login = new Button(getApplicationContext());
         madebyText = new TextView(getApplicationContext());
@@ -232,18 +259,24 @@ public class MainScreen extends Activity {
         qattIcon.setImageDrawable(getDrawable(R.drawable.ic_quackattack));
         loginName.setFilters(new InputFilter[]{groupIDfilter});
         loginPassword.setFilters(new InputFilter[]{groupPasswordfilter});
+        extraName.setFilters(new InputFilter[]{teamNameFilter});
         loginName.setHint("Group ID, e.g '11633'");
         loginPassword.setHint("Password of 6-16 Characters");
+        extraName.setHint("Team's Name, For Sign Up");
         loginName.setTextSize(25);
+        extraName.setTextSize(25);
         loginPassword.setTextSize(21);
         loginPassword.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         loginName.setTypeface(getTypeface());
         loginPassword.setTypeface(getTypeface());
+        extraName.setTypeface(getTypeface());
         login.setText(R.string.login);
         signup.setText(R.string.signup);
         loginName.setHintTextColor(Color.parseColor("#9fb2e0"));
         loginPassword.setHintTextColor(Color.parseColor("#9fb2e0"));
+        extraName.setHintTextColor(Color.parseColor("#9fb2e0"));
         loginName.setGravity(Gravity.CENTER);
+        extraName.setGravity(Gravity.CENTER);
         loginPassword.setError("Must Use 6-16 Chars");
         loginName.setText(account);
         madebyText.setText(R.string.madeby);
@@ -283,6 +316,7 @@ public class MainScreen extends Activity {
         loginSignupView.addView(login);
         loginView.addView(loginName);
         loginView.addView(loginPassword);
+        loginView.addView(extraName);
         loginView.addView(loginSignupView);
         madebyView.addView(tmrIcon);
         madebyView.addView(withText);
@@ -452,7 +486,8 @@ public class MainScreen extends Activity {
             public void onClick(View view) {
                 String text = loginName.getText().toString();
                 String text2 = loginPassword.getText().toString();
-                if (text.length() >= 4 && text.length() <= 7 && text2.length() >= 6 && text2.length() <= 16) {
+                String text3 = extraName.getText().toString();
+                if (text.length() >= 4 && text.length() <= 7 && text2.length() >= 6 && text2.length() <= 16 && text3.length()!=0) {
                     final Dialog loadingDialog = new Dialog(MainScreen.this);
                     LinearLayout loadingDialogLayout = new LinearLayout(getApplicationContext());
                     loadingDialogLayout.setPadding(10, 10, 10, 10);
@@ -482,6 +517,7 @@ public class MainScreen extends Activity {
                     ArrayList<Light.Net.PHP.Post.PHPParameter> loginParameters = new ArrayList<>();
                     loginParameters.add(new Light.Net.PHP.Post.PHPParameter("login", loginName.getText().toString()));
                     loginParameters.add(new Light.Net.PHP.Post.PHPParameter("key", loginPassword.getText().toString()));
+                    loginParameters.add(new Light.Net.PHP.Post.PHPParameter("name", extraName.getText().toString()));
                     loginParameters.add(new Light.Net.PHP.Post.PHPParameter("action", "signup"));
                     loginParameters.add(new Light.Net.PHP.Post.PHPParameter("client", client));
                     loginParameters.add(new Light.Net.PHP.Post.PHPParameter("version", String.valueOf(Light.Device.getVersionCode(getApplicationContext(), getPackageName()))));
@@ -577,12 +613,18 @@ public class MainScreen extends Activity {
                     } else {
                         loginName.setError("Must Be 4-7 Characters");
                     }
+                    if(extraName.getText().toString().length()==0){
+                        extraName.setError("Must Not Be Empty");
+                    }else{
+                        extraName.setError(null);
+                    }
                 }
             }
         });
         //Commands
         loginName.setError(null);
         loginPassword.setError(null);
+        extraName.setError(null);
         //Show The Main Login View
         setContentView(main);
     }
@@ -598,8 +640,8 @@ public class MainScreen extends Activity {
         final ImageView mainIcon = new ImageView(this);
         final ImageView liveIcon = new ImageView(this);
         final ImageView groupIcon = new ImageView(this);
-        final FrameLayout livePadder=new FrameLayout(this);
-        ScrollView contentScroll=new ScrollView(this);
+        final FrameLayout livePadder = new FrameLayout(this);
+        ScrollView contentScroll = new ScrollView(this);
         contentScroll.addView(content);
         final int screenY = Light.Device.screenY(this);
         final int nutSize = (screenY / 7) - screenY / 30;
@@ -640,7 +682,7 @@ public class MainScreen extends Activity {
             }
         });
         livePadder.addView(liveIcon);
-        ObjectAnimator liveFlash=ObjectAnimator.ofFloat(liveIcon,View.ALPHA, 1f,0.1f);
+        ObjectAnimator liveFlash = ObjectAnimator.ofFloat(liveIcon, View.ALPHA, 1f, 0.1f);
         liveFlash.setDuration(800);
         liveFlash.setRepeatMode(ObjectAnimator.REVERSE);
         liveFlash.setRepeatCount(ObjectAnimator.INFINITE);
@@ -652,6 +694,7 @@ public class MainScreen extends Activity {
             @Override
             public void onClick(View view) {
                 //TODO open search bar (slide, does not support RTL.)
+                openSearch(content);
             }
         });
         navbarItems.setOrientation(LinearLayout.HORIZONTAL);
@@ -668,28 +711,84 @@ public class MainScreen extends Activity {
         setContentView(fullScreen);
         loadAccountData(content);
     }
-    private void openSearch(FrameLayout content){
-        LinearLayout fullSearch=new LinearLayout(this);
-        LinearLayout searchBar=new LinearLayout(this);
-        LinearLayout results=new LinearLayout(this);
+
+    private void openSearch(final FrameLayout content) {
+        LinearLayout fullSearch = new LinearLayout(this);
+        LinearLayout searchBar = new LinearLayout(this);
+        final LinearLayout results = new LinearLayout(this);
         fullSearch.setOrientation(LinearLayout.VERTICAL);
-        fullSearch.setGravity(Gravity.CENTER_HORIZONTAL|Gravity.START);
+        fullSearch.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.START);
         results.setOrientation(LinearLayout.VERTICAL);
-        results.setGravity(Gravity.CENTER_HORIZONTAL|Gravity.START);
+        results.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.START);
         searchBar.setOrientation(LinearLayout.HORIZONTAL);
         searchBar.setGravity(Gravity.CENTER);
-        TextView comment=new TextView(this);
+        final TextView comment = new TextView(this);
         comment.setTypeface(getTypeface());
-        comment.setTextSize(40);
+        comment.setTextSize(25);
+        comment.setGravity(Gravity.CENTER);
         comment.setTextColor(Color.WHITE);
         comment.setText("Search By:\nID e.g. 11633\nName e.g. MetalRock");
-        EditText search=new EditText(this);
+        final EditText search = new EditText(this);
         search.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
+        //        search.setPadding(10,10,10,10);
+        searchBar.setPadding(10, 10, 10, 10);
+        searchBar.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        searchBar.addView(search);
+        fullSearch.addView(searchBar);
+        fullSearch.addView(results);
+        results.addView(comment);
+        search.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
+        search.setTextSize(30);
+        search.setLines(1);
+        search.setHint("Type Here To Search");
+        search.setGravity(Gravity.CENTER);
+        search.setInputType(InputType.TYPE_CLASS_TEXT);
+        results.setPadding(10, 10, 10, 10);
+        search.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                    //            comment.setVisibility(View.GONE);
+                    ArrayList<Light.Net.PHP.Post.PHPParameter> searchP = new ArrayList<>();
+                    searchP.add(new Light.Net.PHP.Post.PHPParameter("type", "id"));
+                    searchP.add(new Light.Net.PHP.Post.PHPParameter("client", client));
+                    searchP.add(new Light.Net.PHP.Post.PHPParameter("version", String.valueOf(Light.Device.getVersionCode(getApplicationContext(), getPackageName()))));
+                    new Light.Net.PHP.Post(serviceSearch, searchP, new Light.Net.PHP.Post.OnPost() {
+                        @Override
+                        public void onPost(String s) {
+                            try {
+                                JSONObject response = new JSONObject(s);
+                                boolean success = response.getBoolean("success");
+                                if (success) {
+                                    results.removeAllViews();
+                                    JSONArray groups = response.getJSONArray("list");
+                                    for (int g = 0; g < groups.length(); g++) {
+                                        if (groups.getString(g).contains(search.getText().toString())) {
+                                            results.addView(getGroupSearch(groups.getString(g), content));
+                                        }
+                                    }
+                                    search.setText(null);
+                                    if (results.getChildCount() == 0) {
+                                        results.addView(comment);
+                                    }
+                                }
+                            } catch (JSONException e) {
+                                resetPopup("Failed Reading Date From Server", 21);
+                            }
+                        }
+                    }).execute();
+                    return true;
+                }
+                return false;
+            }
+        });
+        content.removeAllViews();
+        content.addView(fullSearch);
     }
-    private void loadAccountData(FrameLayout content){
-        final LinearLayout fullTable=new LinearLayout(getApplicationContext());
-        TextView noData=new TextView(getApplicationContext());
+
+    private void loadAccountData(FrameLayout content) {
+        final LinearLayout fullTable = new LinearLayout(getApplicationContext());
+        TextView noData = new TextView(getApplicationContext());
         noData.setTypeface(getTypeface());
         noData.setGravity(Gravity.CENTER);
         noData.setTextSize(32);
@@ -699,37 +798,37 @@ public class MainScreen extends Activity {
         fullTable.setOrientation(LinearLayout.VERTICAL);
         fullTable.setGravity(Gravity.CENTER);
         ArrayList<Light.Net.PHP.Post.PHPParameter> readFilePara = new ArrayList<>();
-        readFilePara.add(new Light.Net.PHP.Post.PHPParameter("login", sp.getString("account","")));
-        readFilePara.add(new Light.Net.PHP.Post.PHPParameter("key",sp.getString("key","")));
+        readFilePara.add(new Light.Net.PHP.Post.PHPParameter("login", sp.getString("account", "")));
+        readFilePara.add(new Light.Net.PHP.Post.PHPParameter("key", sp.getString("key", "")));
         readFilePara.add(new Light.Net.PHP.Post.PHPParameter("action", "read"));
         readFilePara.add(new Light.Net.PHP.Post.PHPParameter("tag", "groups"));
         readFilePara.add(new Light.Net.PHP.Post.PHPParameter("file", "scd"));
         readFilePara.add(new Light.Net.PHP.Post.PHPParameter("filters", ""));
         readFilePara.add(new Light.Net.PHP.Post.PHPParameter("client", client));
         readFilePara.add(new Light.Net.PHP.Post.PHPParameter("version", String.valueOf(Light.Device.getVersionCode(getApplicationContext(), getPackageName()))));
-        final Light.Net.PHP.Post getGroups=new Light.Net.PHP.Post(serviceLogin, readFilePara, new Light.Net.PHP.Post.OnPost() {
+        final Light.Net.PHP.Post getGroups = new Light.Net.PHP.Post(serviceLogin, readFilePara, new Light.Net.PHP.Post.OnPost() {
             @Override
             public void onPost(String s) {
                 try {
-                    JSONObject response=new JSONObject(s);
-                    boolean success=response.getBoolean("success");
-                    if(success){
+                    JSONObject response = new JSONObject(s);
+                    boolean success = response.getBoolean("success");
+                    if (success) {
                         fullTable.removeAllViews();
-                        fullTable.setGravity(Gravity.TOP|Gravity.CENTER_HORIZONTAL);
-                        String result=response.getString("result");
-                        JSONArray groups=new JSONArray(result);
-                        for(int g=0;g<groups.length();g++){
+                        fullTable.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+                        String result = response.getString("result");
+                        JSONArray groups = new JSONArray(result);
+                        for (int g = 0; g < groups.length(); g++) {
                             fullTable.addView(getGroupListView(groups.getString(g)));
                         }
                     }
                 } catch (JSONException e) {
-                    resetPopup("Failed Reading Date From Server",21);
+                    resetPopup("Failed Reading Date From Server", 21);
                 }
             }
         });
         ArrayList<Light.Net.PHP.Post.PHPParameter> checkFilePara = new ArrayList<>();
-        checkFilePara.add(new Light.Net.PHP.Post.PHPParameter("login", sp.getString("account","")));
-        checkFilePara.add(new Light.Net.PHP.Post.PHPParameter("key",sp.getString("key","")));
+        checkFilePara.add(new Light.Net.PHP.Post.PHPParameter("login", sp.getString("account", "")));
+        checkFilePara.add(new Light.Net.PHP.Post.PHPParameter("key", sp.getString("key", "")));
         checkFilePara.add(new Light.Net.PHP.Post.PHPParameter("action", "checkFile"));
         checkFilePara.add(new Light.Net.PHP.Post.PHPParameter("file", "scd"));
         checkFilePara.add(new Light.Net.PHP.Post.PHPParameter("filters", ""));
@@ -739,29 +838,29 @@ public class MainScreen extends Activity {
             @Override
             public void onPost(String s) {
                 try {
-                    JSONObject o=new JSONObject(s);
-                    boolean success=o.getBoolean("success");
-                    if(success){
-                        if(o.getString("file").equals("scd")){
+                    JSONObject o = new JSONObject(s);
+                    boolean success = o.getBoolean("success");
+                    if (success) {
+                        if (o.getString("file").equals("scd")) {
                             getGroups.execute();
                         }
                     }
                 } catch (JSONException e) {
-                    resetPopup("Failed Reading Date From Server",22);
+                    resetPopup("Failed Reading Date From Server", 22);
                 }
             }
         }).execute();
         noData.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                JSONArray groups=new JSONArray();
+                JSONArray groups = new JSONArray();
                 groups.put("11344");
                 groups.put("16332");
                 groups.put("11235");
                 groups.put("45351");
                 ArrayList<Light.Net.PHP.Post.PHPParameter> readFilePara = new ArrayList<>();
-                readFilePara.add(new Light.Net.PHP.Post.PHPParameter("login", sp.getString("account","")));
-                readFilePara.add(new Light.Net.PHP.Post.PHPParameter("key",sp.getString("key","")));
+                readFilePara.add(new Light.Net.PHP.Post.PHPParameter("login", sp.getString("account", "")));
+                readFilePara.add(new Light.Net.PHP.Post.PHPParameter("key", sp.getString("key", "")));
                 readFilePara.add(new Light.Net.PHP.Post.PHPParameter("action", "write"));
                 readFilePara.add(new Light.Net.PHP.Post.PHPParameter("tag", "groups"));
                 readFilePara.add(new Light.Net.PHP.Post.PHPParameter("file", "scd"));
@@ -771,57 +870,190 @@ public class MainScreen extends Activity {
                     @Override
                     public void onPost(String s) {
                         try {
-                            JSONObject response=new JSONObject(s);
-                            boolean success=response.getBoolean("success");
-                            if(success){
-                                if(response.getBoolean("wrote")){
-                                    resetPopup("Wrote Data!",-20);
+                            JSONObject response = new JSONObject(s);
+                            boolean success = response.getBoolean("success");
+                            if (success) {
+                                if (response.getBoolean("wrote")) {
+                                    resetPopup("Wrote Data!", -20);
                                 }
                             }
                         } catch (JSONException e) {
-                            resetPopup("Failed Reading Date From Server",23);
+                            resetPopup("Failed Reading Date From Server", 23);
                         }
                     }
                 }).execute();
             }
         });
-        fullTable.setPadding(20,20,20,20);
+        fullTable.setPadding(20, 20, 20, 20);
         content.removeAllViews();
         content.addView(fullTable);
     }
-    LinearLayout getGroupListView(String id){
-        LinearLayout group=new LinearLayout(this);
-        LinearLayout row1=new LinearLayout(this);
-        LinearLayout row2=new LinearLayout(this);
-        LinearLayout row2right=new LinearLayout(this);
-        LinearLayout.LayoutParams buttonParms=new LinearLayout.LayoutParams(Light.Device.screenX(this)/3,Light.Device.screenY(this)/12);
+
+    LinearLayout getGroupSearch(final String id, final FrameLayout content) {
+        LinearLayout group = new LinearLayout(this);
+        LinearLayout row1 = new LinearLayout(this);
+        LinearLayout row2 = new LinearLayout(this);
+        LinearLayout row2right = new LinearLayout(this);
+        LinearLayout.LayoutParams buttonParms = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Light.Device.screenY(this) / 12);
         group.setOrientation(LinearLayout.VERTICAL);
         row1.setOrientation(LinearLayout.HORIZONTAL);
         row2.setOrientation(LinearLayout.HORIZONTAL);
         row2right.setOrientation(LinearLayout.HORIZONTAL);
-        group.setPadding(20,20,20,20);
+        group.setPadding(20, 20, 20, 20);
         group.setGravity(Gravity.CENTER);
-        row1.setGravity(Gravity.CENTER_HORIZONTAL|Gravity.BOTTOM);
-        row1.setPadding(10,10,10,10);
+        row1.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
+        row1.setPadding(10, 10, 10, 10);
         row2.setGravity(Gravity.CENTER);
-        row2right.setGravity(Gravity.CENTER_VERTICAL|Gravity.END);
-        TextView gid=new TextView(this),aka=new TextView(this);
-        Button remove=new Button(this),more=new Button(this);
-        gid.setText("#"+id);
+        TextView gid = new TextView(this), aka = new TextView(this);
+        Button add = new Button(this);
+        gid.setText("#" + id);
         gid.setTypeface(getTypeface());
         gid.setTextSize(40);
         gid.setTextColor(Color.WHITE);
         aka.setText(null);
         aka.setTypeface(getTypeface());
         aka.setTextSize(24);
-        aka.setTextColor(Color.WHITE-0x222222);
+        aka.setTextColor(Color.WHITE - 0x222222);
+        row1.addView(gid);
+        row1.addView(aka);
+        add.setText("Add");
+        add.setBackground(getDrawable(R.drawable.button));
+        add.setTypeface(getTypeface());
+        add.setTextSize(25);
+        add.setPadding(10, 10, 10, 10);
+        add.setTextColor(Color.parseColor("#22dd22"));
+        add.setAllCaps(false);
+        add.setLayoutParams(buttonParms);
+        row2.addView(add);
+        group.addView(row1);
+        group.addView(row2);
+        group.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Light.Device.screenY(this) / 5));
+        group.setBackground(getDrawable(R.drawable.back_2));
+        add.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                final JSONArray array = new JSONArray();
+                array.put(id);
+                final ArrayList<Light.Net.PHP.Post.PHPParameter> writeData = new ArrayList<>();
+                writeData.add(new Light.Net.PHP.Post.PHPParameter("login", sp.getString("account", "")));
+                writeData.add(new Light.Net.PHP.Post.PHPParameter("key", sp.getString("key", "")));
+                writeData.add(new Light.Net.PHP.Post.PHPParameter("action", "write"));
+                writeData.add(new Light.Net.PHP.Post.PHPParameter("tag", "groups"));
+                writeData.add(new Light.Net.PHP.Post.PHPParameter("file", "scd"));
+                writeData.add(new Light.Net.PHP.Post.PHPParameter("version", String.valueOf(Light.Device.getVersionCode(getApplicationContext(), getPackageName()))));
+                final Light.Net.PHP.Post writeNew = new Light.Net.PHP.Post(serviceLogin, writeData, new Light.Net.PHP.Post.OnPost() {
+                    @Override
+                    public void onPost(String s) {
+                        try {
+                            JSONObject response = new JSONObject(s);
+                            boolean success = response.getBoolean("success");
+                            if (success) {
+                                if (response.getBoolean("wrote")) {
+                                    loadAccountData(content);
+                                }
+                            }
+                        } catch (JSONException e) {
+                            resetPopup("Failed Reading Date From Server", 23);
+                        }
+                    }
+                });
+                ArrayList<Light.Net.PHP.Post.PHPParameter> readFilePara = new ArrayList<>();
+                readFilePara.add(new Light.Net.PHP.Post.PHPParameter("login", sp.getString("account", "")));
+                readFilePara.add(new Light.Net.PHP.Post.PHPParameter("key", sp.getString("key", "")));
+                readFilePara.add(new Light.Net.PHP.Post.PHPParameter("action", "read"));
+                readFilePara.add(new Light.Net.PHP.Post.PHPParameter("tag", "groups"));
+                readFilePara.add(new Light.Net.PHP.Post.PHPParameter("file", "scd"));
+                readFilePara.add(new Light.Net.PHP.Post.PHPParameter("filters", ""));
+                readFilePara.add(new Light.Net.PHP.Post.PHPParameter("client", client));
+                readFilePara.add(new Light.Net.PHP.Post.PHPParameter("version", String.valueOf(Light.Device.getVersionCode(getApplicationContext(), getPackageName()))));
+                final Light.Net.PHP.Post getGroups = new Light.Net.PHP.Post(serviceLogin, readFilePara, new Light.Net.PHP.Post.OnPost() {
+                    @Override
+                    public void onPost(String s) {
+                        try {
+                            JSONObject response = new JSONObject(s);
+                            boolean success = response.getBoolean("success");
+                            if (success) {
+                                String result = response.getString("result");
+                                JSONArray myarr = new JSONArray(result);
+                                for (int g = 0; g < myarr.length(); g++) {
+                                    array.put(myarr.get(g));
+                                }
+                                writeData.add(new Light.Net.PHP.Post.PHPParameter("value", array.toString()));
+                                writeNew.execute();
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                            resetPopup(e.toString(),25);
+                        }
+                    }
+                });
+                ArrayList<Light.Net.PHP.Post.PHPParameter> checkFilePara = new ArrayList<>();
+                checkFilePara.add(new Light.Net.PHP.Post.PHPParameter("login", sp.getString("account", "")));
+                checkFilePara.add(new Light.Net.PHP.Post.PHPParameter("key", sp.getString("key", "")));
+                checkFilePara.add(new Light.Net.PHP.Post.PHPParameter("action", "checkFile"));
+                checkFilePara.add(new Light.Net.PHP.Post.PHPParameter("file", "scd"));
+                checkFilePara.add(new Light.Net.PHP.Post.PHPParameter("filters", ""));
+                checkFilePara.add(new Light.Net.PHP.Post.PHPParameter("client", client));
+                checkFilePara.add(new Light.Net.PHP.Post.PHPParameter("version", String.valueOf(Light.Device.getVersionCode(getApplicationContext(), getPackageName()))));
+                new Light.Net.PHP.Post(serviceLogin, checkFilePara, new Light.Net.PHP.Post.OnPost() {
+                    @Override
+                    public void onPost(String s) {
+                        try {
+                            JSONObject o = new JSONObject(s);
+                            boolean success = o.getBoolean("success");
+                            if (success) {
+                                if (o.getString("file").equals("scd")) {
+                                    getGroups.execute();
+                                } else {
+                                    writeData.add(new Light.Net.PHP.Post.PHPParameter("value", array.toString()));
+                                    writeNew.execute();
+                                }
+                            }
+                        } catch (JSONException e) {
+                            resetPopup("Failed Reading Date From Server", 22);
+                        }
+                    }
+                }).execute();
+            }
+        });
+        setAkaOnTextView(aka, id);
+        return group;
+    }
+
+    LinearLayout getGroupListView(String id) {
+        LinearLayout group = new LinearLayout(this);
+        LinearLayout row1 = new LinearLayout(this);
+        LinearLayout row2 = new LinearLayout(this);
+        LinearLayout row2right = new LinearLayout(this);
+        LinearLayout.LayoutParams buttonParms = new LinearLayout.LayoutParams(Light.Device.screenX(this) / 3, Light.Device.screenY(this) / 12);
+        group.setOrientation(LinearLayout.VERTICAL);
+        row1.setOrientation(LinearLayout.HORIZONTAL);
+        row2.setOrientation(LinearLayout.HORIZONTAL);
+        row2right.setOrientation(LinearLayout.HORIZONTAL);
+        group.setPadding(20, 20, 20, 20);
+        group.setGravity(Gravity.CENTER);
+        row1.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
+        row1.setPadding(10, 10, 10, 10);
+        row2.setGravity(Gravity.CENTER);
+        row2right.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
+        TextView gid = new TextView(this), aka = new TextView(this);
+        Button remove = new Button(this), more = new Button(this);
+        gid.setText("#" + id);
+        gid.setTypeface(getTypeface());
+        gid.setTextSize(40);
+        gid.setTextColor(Color.WHITE);
+        aka.setText(null);
+        aka.setTypeface(getTypeface());
+        aka.setTextSize(24);
+        aka.setTextColor(Color.WHITE - 0x222222);
         row1.addView(gid);
         row1.addView(aka);
         remove.setText("Remove");
         remove.setBackground(getDrawable(R.drawable.button));
         remove.setTypeface(getTypeface());
         remove.setTextSize(25);
-        remove.setPadding(10,10,10,10);
+        remove.setPadding(10, 10, 10, 10);
         remove.setTextColor(Color.parseColor("#bb2222"));
         remove.setAllCaps(false);
         remove.setLayoutParams(buttonParms);
@@ -831,7 +1063,7 @@ public class MainScreen extends Activity {
         more.setBackground(getDrawable(R.drawable.button));
         more.setTypeface(getTypeface());
         more.setTextSize(25);
-        more.setPadding(10,10,10,10);
+        more.setPadding(10, 10, 10, 10);
         more.setLayoutParams(buttonParms);
         row2.addView(remove);
         row2right.addView(more);
@@ -839,14 +1071,15 @@ public class MainScreen extends Activity {
         group.addView(row2);
         row2.addView(row2right);
         row2right.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        group.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Light.Device.screenY(this)/5));
+        group.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Light.Device.screenY(this) / 5));
         group.setBackground(getDrawable(R.drawable.back_2));
-        setAkaOnTextView(aka,id);
+        setAkaOnTextView(aka, id);
         return group;
     }
-    void setAkaOnTextView(final TextView aka,String id){
-        if(aka.getText().toString().equals("")){
-            final String soFar=" aka ";
+
+    void setAkaOnTextView(final TextView aka, String id) {
+        if (aka.getText().toString().equals("")) {
+            final String soFar = " aka ";
             ArrayList<Light.Net.PHP.Post.PHPParameter> akaGet = new ArrayList<>();
             akaGet.add(new Light.Net.PHP.Post.PHPParameter("login", id));
             akaGet.add(new Light.Net.PHP.Post.PHPParameter("action", "readPublic"));
@@ -857,9 +1090,8 @@ public class MainScreen extends Activity {
                 public void onPost(String s) {
                     try {
                         JSONObject result = new JSONObject(s);
-
-                        if(result.getBoolean("success")){
-                            aka.setText(soFar+result.getString("result"));
+                        if (result.getBoolean("success")) {
+                            aka.setText(soFar + result.getString("result"));
                         }
                     } catch (JSONException e) {
                         e.printStackTrace();
