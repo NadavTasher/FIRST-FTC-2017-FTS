@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">FIRST Tech Scouting</string>
+    <string name="app_name">FTScouting</string>
     <string name="login">Login</string>
     <string name="signup">Sign Up</string>
     <string name="checking_conn_w_server">Connecting To Server</string>
