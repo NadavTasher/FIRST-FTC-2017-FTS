@@ -3,6 +3,6 @@
     <string name="login">Login</string>
     <string name="signup">Sign Up</string>
     <string name="checking_conn_w_server">Connecting To Server</string>
-    <string name="madeby">Made By\n#11633 Fantastic Fourmula</string>
+    <string name="madeby">Made By</string>
     <string name="with">&amp;</string>
 </resources>

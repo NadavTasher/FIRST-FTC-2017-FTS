@@ -7,16 +7,19 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.shapes.RectShape;
 import android.graphics.drawable.shapes.Shape;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.text.Spanned;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Gravity;
@@ -47,6 +50,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -56,12 +61,12 @@ import nadav.tasher.lightool.Light;
 
 public class MainScreen extends Activity {
     static final String errorCodeManual = "Error Code Manual:\n" + "0-20 Connection Errors\n" + "20-40 JSON Errors, Server Response Errors\n" + "" + "" + "" + "" + "" + "" + "";
-    private final String serviceProvider = "http://ftc.thepuzik.com";
+    static final String serviceProvider = "http://ftc.thepuzik.com";
     private final String servicePush = serviceProvider + "/push/push.php";
     private final String serviceLogin = serviceProvider + "/sign/login.php";
     private final String serviceSearch = serviceProvider + "/sign/search.php";
     private final String serviceNews = serviceProvider + "/news/news.php";
-    private final String formatFile = serviceProvider + "/scouting/format.json";
+    private static final String formatFile = serviceProvider + "/scouting/format.json";
     private final String client = "FTSAndroid";
     private SharedPreferences sp;
     private int color = Color.parseColor("#041228");
@@ -72,7 +77,6 @@ public class MainScreen extends Activity {
     int textWhite = Color.WHITE;
     private AccountServices as;
     ArrayList<Template> temps = new ArrayList<>();
-    String format;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,50 +97,61 @@ public class MainScreen extends Activity {
         as.login(getApplicationContext(), sp.getString("account", ""), sp.getString("key", ""), new AccountServices.OnLogin() {
             @Override
             public void loginSucceded(String s, String s1) {
+                Log.i("Hole", "OK");
                 mainScreen();
             }
 
             @Override
             public void wrongPassword(String s) {
-                firstLogin(sp.getString("account", null));
+                firstLogin(s);
             }
 
             @Override
             public void noAccount(String s) {
-                firstLogin(sp.getString("account", null));
+                firstLogin(s);
             }
         });
     }
 
-    private void init() {
-        new Light.Net.NetFile.FileReader(formatFile, new Light.Net.NetFile.FileReader.OnEnd() {
+    private void getTemplate() {
+        //        new Light.Net.NetFile.FileReader(formatFile, new Light.Net.NetFile.FileReader.OnEnd() {
+        //            @Override
+        //            public void onFileRead(InputStream inputStream) {
+        //                try {
+        //                    BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+        //                    String nl;
+        //                    while ((nl = br.readLine()) != null) {
+        //                        if (format != null) {
+        //                            format += "\n" + nl;
+        //                        } else {
+        //                            format = nl;
+        //                        }
+        //                    }
+        //                    try {
+        //                        JSONObject reader = new JSONObject(format);
+        //                        JSONObject config = reader.getJSONObject("format");
+        //                        Iterator<String> types = config.keys();
+        //                        while (types.hasNext()) {
+        //                            String name = types.next();
+        //                            temps.add(new Template(name, config.getJSONArray(name)));
+        //                        }
+        //                    } catch (JSONException e) {
+        //                        e.printStackTrace();
+        //                    }
+        //                } catch (IOException e) {
+        //                }
+        //            }
+        //        }).execute();
+        new GetTemplates(new GetTemplates.EDA() {
             @Override
-            public void onFileRead(InputStream inputStream) {
-                try {
-                    BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
-                    String nl;
-                    while ((nl = br.readLine()) != null) {
-                        if (format != null) {
-                            format += "\n" + nl;
-                        } else {
-                            format = nl;
-                        }
-                    }
-                    try {
-                        JSONObject reader = new JSONObject(format);
-                        JSONObject config = reader.getJSONObject("format");
-                        Iterator<String> types = config.keys();
-                        while (types.hasNext()) {
-                            String name = types.next();
-                            temps.add(new Template(name, config.getJSONArray(name)));
-                        }
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                } catch (IOException e) {
-                }
+            public void doAfter(ArrayList<Template> temops) {
+                temps.addAll(temops);
             }
         }).execute();
+    }
+
+    private void init() {
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         sp = getSharedPreferences("Settings", Context.MODE_PRIVATE);
         as = new AccountServices(serviceLogin, "FTSAndroid", "FTS", new AccountServices.OnLogin() {
             @Override
@@ -167,6 +182,7 @@ public class MainScreen extends Activity {
             @Override
             public void onPing(String s, boolean b) {
                 if (s.equals(serviceProvider) && b) {
+                    getTemplate();
                     if (!sp.contains("account")) {
                         firstLogin(sp.getString("account", null));
                     } else {
@@ -314,7 +330,7 @@ public class MainScreen extends Activity {
         //Assign Values
         main.setBackgroundColor(color);
         mainIcon.setImageDrawable(getDrawable(R.drawable.ic_icon));
-        tmrIcon.setImageDrawable(getDrawable(R.drawable.ic_fantastic));
+        tmrIcon.setImageDrawable(getDrawable(R.drawable.ic_fantastic_banner));
         loginName.setFilters(new InputFilter[]{groupIDfilter});
         loginPassword.setFilters(new InputFilter[]{groupPasswordfilter});
         loginName.setHint("Group ID, e.g '11633'");
@@ -337,7 +353,7 @@ public class MainScreen extends Activity {
         madebyText.setText(R.string.madeby);
         madebyText.setTypeface(getTypeface());
         madebyText.setGravity(Gravity.CENTER);
-        madebyText.setTextSize(38);
+        madebyText.setTextSize(37);
         madebyText.setTextColor(textBlack);
         withText.setText(R.string.with);
         withText.setGravity(Gravity.CENTER);
@@ -354,13 +370,15 @@ public class MainScreen extends Activity {
         login.setAllCaps(false);
         signup.setAllCaps(false);
         //LayoutParams Setting
-        int icon_size = Light.Device.screenX(getApplicationContext()) / 3;
+        int icon_size = (int) (Light.Device.screenX(getApplicationContext()) *0.9);
+        int icon_size_small = (int) (Light.Device.screenX(getApplicationContext()) /3);
         int loginX = (int) (Light.Device.screenX(getApplicationContext()) * 0.8);
         int loginY = (int) (Light.Device.screenY(getApplicationContext()) * 0.4);
         LinearLayout.LayoutParams genericIcon = new LinearLayout.LayoutParams(icon_size, icon_size);
+        LinearLayout.LayoutParams genericIconSmall = new LinearLayout.LayoutParams(icon_size_small, icon_size_small);
         LinearLayout.LayoutParams loginParams = new LinearLayout.LayoutParams(loginX, loginY);
         LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(loginX / 2, ViewGroup.LayoutParams.WRAP_CONTENT);
-        mainIcon.setLayoutParams(genericIcon);
+        mainIcon.setLayoutParams(genericIconSmall);
         tmrIcon.setLayoutParams(genericIcon);
         loginView.setLayoutParams(loginParams);
         login.setLayoutParams(buttonParams);
@@ -375,7 +393,7 @@ public class MainScreen extends Activity {
         main.addView(mainIcon);
         main.addView(loginView);
         main.addView(madebyText);
-//        main.addView(madebyView);
+                main.addView(madebyView);
         //Listeners
         loginPassword.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
@@ -658,7 +676,7 @@ public class MainScreen extends Activity {
             public void onClick(View view) {
                 AlertDialog.Builder ab = new AlertDialog.Builder(MainScreen.this);
                 ab.setTitle(R.string.app_name);
-                ab.setMessage("This App Was Made By:\nNadav Tasher #11633\nShirelle Danon #11635\nVersion: " + Light.Device.getVersionName(getApplicationContext(), getPackageName()) + "\nBuild: " + Light.Device.getVersionCode(getApplicationContext(), getPackageName()));
+                ab.setMessage("This App Was Made By:\nNadav Tasher #11633\nVersion: " + Light.Device.getVersionName(getApplicationContext(), getPackageName()) + "\nBuild: " + Light.Device.getVersionCode(getApplicationContext(), getPackageName()));
                 ab.setCancelable(true);
                 ab.setPositiveButton("Close", null);
                 ab.show();
@@ -725,7 +743,7 @@ public class MainScreen extends Activity {
         comment.setTextSize(25);
         comment.setGravity(Gravity.CENTER);
         comment.setTextColor(Color.WHITE);
-        comment.setText("Search By:\nID e.g. 11633\nName e.g. MetalRock");
+        comment.setText("Search By:\nID e.g. 11633\nName e.g. Fantastic Fourmula");
         final EditText search = new EditText(this);
         search.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         //        search.setPadding(10,10,10,10);
@@ -856,7 +874,7 @@ public class MainScreen extends Activity {
         row2right.setOrientation(LinearLayout.HORIZONTAL);
         group.setPadding(20, 20, 20, 20);
         group.setGravity(Gravity.CENTER);
-        row1.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
+        row1.setGravity(Gravity.CENTER);
         row1.setPadding(10, 10, 10, 10);
         row2.setGravity(Gravity.CENTER);
         TextView gid = new TextView(this), aka = new TextView(this);
@@ -868,7 +886,12 @@ public class MainScreen extends Activity {
         aka.setText(null);
         aka.setTypeface(getTypeface());
         aka.setTextSize(24);
+        aka.setEllipsize(TextUtils.TruncateAt.END);
         aka.setTextColor(Color.WHITE - 0x222222);
+        aka.setGravity(Gravity.CENTER_VERTICAL|Gravity.START);
+        aka.setLines(1);
+        aka.setLayoutParams(new LinearLayout.LayoutParams((int) (Light.Device.screenX(getApplicationContext()) *0.55), (int) (Light.Device.screenY(getApplicationContext()) /13)));
+
         row1.addView(gid);
         row1.addView(aka);
         add.setText("Add");
@@ -999,7 +1022,7 @@ public class MainScreen extends Activity {
         row2right.setOrientation(LinearLayout.HORIZONTAL);
         group.setPadding(20, 20, 20, 20);
         group.setGravity(Gravity.CENTER);
-        row1.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
+        row1.setGravity(Gravity.CENTER);
         row1.setPadding(10, 10, 10, 10);
         row2.setGravity(Gravity.CENTER);
         row2right.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
@@ -1012,7 +1035,11 @@ public class MainScreen extends Activity {
         aka.setText(null);
         aka.setTypeface(getTypeface());
         aka.setTextSize(24);
+        aka.setEllipsize(TextUtils.TruncateAt.END);
         aka.setTextColor(Color.WHITE - 0x222222);
+        aka.setGravity(Gravity.CENTER_VERTICAL|Gravity.START);
+        aka.setLines(1);
+        aka.setLayoutParams(new LinearLayout.LayoutParams((int) (Light.Device.screenX(getApplicationContext()) *0.55), (int) (Light.Device.screenY(getApplicationContext()) /13)));
         row1.addView(gid);
         row1.addView(aka);
         remove.setText("Remove");
@@ -1078,7 +1105,6 @@ public class MainScreen extends Activity {
                     as.read(getApplicationContext(), sp.getString("account", null), sp.getString("key", null), id, "config", new AccountServices.OnRead() {
                         @Override
                         public void onRead(String s) {
-                            Log.i("JSON", s);
                             try {
                                 JSONObject teamConf = new JSONObject(s);
                                 for (int type = 0; type < temps.size(); type++) {
@@ -1086,6 +1112,7 @@ public class MainScreen extends Activity {
                                     ll.addView(getTemplate(t, teamConf, id, content));
                                 }
                             } catch (JSONException e) {
+                                e.printStackTrace();
                             }
                         }
 
@@ -1280,7 +1307,7 @@ public class MainScreen extends Activity {
 
     void setAkaOnTextView(final TextView aka, String id) {
         if (aka.getText().toString().equals("")) {
-            final String soFar = " aka ";
+            final String soFar = " ";
             as.readPublic(getApplicationContext(), id, "name", new AccountServices.OnRead() {
                 @Override
                 public void onRead(String s) {
@@ -1298,7 +1325,7 @@ public class MainScreen extends Activity {
         void doAfter();
     }
 
-    class Template {
+    static class Template {
         String name;
         ArrayList<String> options = new ArrayList<>();
 
@@ -1308,8 +1335,59 @@ public class MainScreen extends Activity {
                 try {
                     options.add(opt.getString(i));
                 } catch (JSONException e) {
+                    e.printStackTrace();
                 }
             }
+        }
+    }
+
+    static class GetTemplates extends AsyncTask<String, String, ArrayList<Template>> {
+        EDA eda = new EDA() {
+            @Override
+            public void doAfter(ArrayList<Template> tps) {
+            }
+        };
+
+        public GetTemplates(EDA eda) {
+            this.eda = eda;
+        }
+
+        @Override
+        protected ArrayList<Template> doInBackground(String... strings) {
+            ArrayList<Template> tm = new ArrayList<>();
+            try {
+                URL url = new URL(MainScreen.formatFile);
+                BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+                String str;
+                StringBuilder format = null;
+                while ((str = in.readLine()) != null) {
+                    if (format != null) {
+                        format.append("\n").append(str);
+                    } else {
+                        format = new StringBuilder(str);
+                    }
+                }
+                in.close();
+                JSONObject reader = new JSONObject(format.toString());
+                JSONObject config = reader.getJSONObject("format");
+                Iterator<String> types = config.keys();
+                while (types.hasNext()) {
+                    String name = types.next();
+                    tm.add(new Template(name, config.getJSONArray(name)));
+                }
+            } catch (NullPointerException | JSONException | IOException e) {
+                e.printStackTrace();
+            }
+            return tm;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<Template> templates) {
+            eda.doAfter(templates);
+        }
+
+        interface EDA {
+            void doAfter(ArrayList<Template> tps);
         }
     }
 }
