@@ -1,4 +1,4 @@
-package themetalrock.x.quackattack2.ftcscouting;
+package fantastic.fourmula.ftcscouting;
 
 import android.animation.ObjectAnimator;
 import android.app.Activity;
@@ -50,6 +50,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import fantastic.fourmula.ftscouting.R;
 import nadav.tasher.accounts.AccountServices;
 import nadav.tasher.lightool.Light;
 
@@ -67,10 +68,10 @@ public class MainScreen extends Activity {
     private int secolor = color + 0x333333;
     private JSONArray alreadyScouting;
     private ImageView groupIcon;
-    int textBlack=Color.WHITE;
-    int textWhite=Color.WHITE;
+    int textBlack = Color.WHITE;
+    int textWhite = Color.WHITE;
     private AccountServices as;
-    ArrayList<Template> temps=new ArrayList<>();
+    ArrayList<Template> temps = new ArrayList<>();
     String format;
 
     @Override
@@ -89,31 +90,22 @@ public class MainScreen extends Activity {
     }
 
     private void checkCredentials() {
-        ArrayList<Light.Net.PHP.Post.PHPParameter> loginParameters = new ArrayList<>();
-        loginParameters.add(new Light.Net.PHP.Post.PHPParameter("login", sp.getString("account", "")));
-        loginParameters.add(new Light.Net.PHP.Post.PHPParameter("key", sp.getString("key", "")));
-        loginParameters.add(new Light.Net.PHP.Post.PHPParameter("action", "verifyCred"));
-        loginParameters.add(new Light.Net.PHP.Post.PHPParameter("version", String.valueOf(Light.Device.getVersionCode(getApplicationContext(), getPackageName()))));
-        new Light.Net.PHP.Post(serviceLogin, loginParameters, new Light.Net.PHP.Post.OnPost() {
+        as.login(getApplicationContext(), sp.getString("account", ""), sp.getString("key", ""), new AccountServices.OnLogin() {
             @Override
-            public void onPost(String s) {
-                Log.i("JSON-Response", s);
-                try {
-                    JSONObject response = new JSONObject(s);
-                    boolean success = response.getBoolean("success");
-                    boolean access = response.getBoolean("access");
-                    if (success) {
-                        if (access) {
-                            mainScreen();
-                        } else {
-                            firstLogin(sp.getString("account", null));
-                        }
-                    }
-                } catch (JSONException e) {
-                    checkCredentials();
-                }
+            public void loginSucceded(String s, String s1) {
+                mainScreen();
             }
-        }).execute();
+
+            @Override
+            public void wrongPassword(String s) {
+                firstLogin(sp.getString("account", null));
+            }
+
+            @Override
+            public void noAccount(String s) {
+                firstLogin(sp.getString("account", null));
+            }
+        });
     }
 
     private void init() {
@@ -121,21 +113,21 @@ public class MainScreen extends Activity {
             @Override
             public void onFileRead(InputStream inputStream) {
                 try {
-                    BufferedReader br= new BufferedReader(new InputStreamReader(inputStream));
+                    BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
                     String nl;
-                    while((nl=br.readLine())!=null){
-                        if(format!=null){
-                            format+="\n"+nl;
-                        }else{
-                            format=nl;
+                    while ((nl = br.readLine()) != null) {
+                        if (format != null) {
+                            format += "\n" + nl;
+                        } else {
+                            format = nl;
                         }
                     }
                     try {
-                        JSONObject reader=new JSONObject(format);
-                        JSONObject config=reader.getJSONObject("format");
-                        Iterator<String> types=config.keys();
-                        while(types.hasNext()){
-                            String name=types.next();
+                        JSONObject reader = new JSONObject(format);
+                        JSONObject config = reader.getJSONObject("format");
+                        Iterator<String> types = config.keys();
+                        while (types.hasNext()) {
+                            String name = types.next();
                             temps.add(new Template(name, config.getJSONArray(name)));
                         }
                     } catch (JSONException e) {
@@ -146,7 +138,7 @@ public class MainScreen extends Activity {
             }
         }).execute();
         sp = getSharedPreferences("Settings", Context.MODE_PRIVATE);
-        as=new AccountServices(serviceLogin, "FTSAndrion", "FTS", new AccountServices.OnLogin() {
+        as = new AccountServices(serviceLogin, "FTSAndroid", "FTS", new AccountServices.OnLogin() {
             @Override
             public void loginSucceded(String s, String s1) {
                 mainScreen();
@@ -212,7 +204,6 @@ public class MainScreen extends Activity {
         ll.setOrientation(LinearLayout.VERTICAL);
         ll.setBackgroundColor(color);
         ImageView icon = new ImageView(this);
-        icon.setImageDrawable(getDrawable(R.drawable.ic_icon));
         int is = (int) (Light.Device.screenX(getApplicationContext()) * 0.8);
         icon.setLayoutParams(new LinearLayout.LayoutParams(is, is));
         ll.addView(icon);
@@ -242,7 +233,7 @@ public class MainScreen extends Activity {
                 return null;
             }
         };
-        InputFilter teamNameFilter = new InputFilter() {
+        final InputFilter teamNameFilter = new InputFilter() {
 
             @Override
             public CharSequence filter(CharSequence charSequence, int i, int i1, Spanned spanned, int i2, int i3) {
@@ -307,14 +298,13 @@ public class MainScreen extends Activity {
         madebyView.setOrientation(LinearLayout.HORIZONTAL);
         madebyView.setGravity(Gravity.CENTER);
         //
-        ImageView mainIcon, tmrIcon, qattIcon;
+        ImageView mainIcon, tmrIcon;
         final EditText loginName, loginPassword;
         TextView madebyText, withText;
         final Button signup, login;
         //Initialize Widgets
         mainIcon = new ImageView(getApplicationContext());
         tmrIcon = new ImageView(getApplicationContext());
-        qattIcon = new ImageView(getApplicationContext());
         loginName = new EditText(getApplicationContext());
         loginPassword = new EditText(getApplicationContext());
         signup = new Button(getApplicationContext());
@@ -324,8 +314,7 @@ public class MainScreen extends Activity {
         //Assign Values
         main.setBackgroundColor(color);
         mainIcon.setImageDrawable(getDrawable(R.drawable.ic_icon));
-        tmrIcon.setImageDrawable(getDrawable(R.drawable.ic_themetalrock));
-        qattIcon.setImageDrawable(getDrawable(R.drawable.ic_quackattack));
+        tmrIcon.setImageDrawable(getDrawable(R.drawable.ic_fantastic));
         loginName.setFilters(new InputFilter[]{groupIDfilter});
         loginPassword.setFilters(new InputFilter[]{groupPasswordfilter});
         loginName.setHint("Group ID, e.g '11633'");
@@ -343,7 +332,6 @@ public class MainScreen extends Activity {
         loginPassword.setTextColor(textBlack);
         loginName.setGravity(Gravity.CENTER);
         loginPassword.setGravity(Gravity.CENTER);
-
         loginPassword.setError("Must Use 6-16 Chars");
         loginName.setText(account);
         madebyText.setText(R.string.madeby);
@@ -374,7 +362,6 @@ public class MainScreen extends Activity {
         LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(loginX / 2, ViewGroup.LayoutParams.WRAP_CONTENT);
         mainIcon.setLayoutParams(genericIcon);
         tmrIcon.setLayoutParams(genericIcon);
-        qattIcon.setLayoutParams(genericIcon);
         loginView.setLayoutParams(loginParams);
         login.setLayoutParams(buttonParams);
         signup.setLayoutParams(buttonParams);
@@ -385,12 +372,10 @@ public class MainScreen extends Activity {
         loginView.addView(loginPassword);
         loginView.addView(loginSignupView);
         madebyView.addView(tmrIcon);
-        madebyView.addView(withText);
-        madebyView.addView(qattIcon);
         main.addView(mainIcon);
         main.addView(loginView);
         main.addView(madebyText);
-        main.addView(madebyView);
+//        main.addView(madebyView);
         //Listeners
         loginPassword.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
@@ -560,12 +545,13 @@ public class MainScreen extends Activity {
                     loadingDialog.setCancelable(false);
                     loadingDialog.setContentView(loadingDialogLayout);
                     loadingDialog.show();
-                    AlertDialog.Builder adb=new AlertDialog.Builder(MainScreen.this);
+                    AlertDialog.Builder adb = new AlertDialog.Builder(MainScreen.this);
                     adb.setTitle("Team Name");
-                    final EditText extraName=new EditText(getApplicationContext());
+                    final EditText extraName = new EditText(getApplicationContext());
                     extraName.setTypeface(getTypeface());
                     extraName.setHint("Team's Name Goes Here");
                     extraName.setTextSize(24);
+                    extraName.setFilters(new InputFilter[]{teamNameFilter});
                     adb.setView(extraName);
                     adb.setPositiveButton("Sign Up", new DialogInterface.OnClickListener() {
                         @Override
@@ -612,7 +598,7 @@ public class MainScreen extends Activity {
                             });
                         }
                     });
-                    adb.setNegativeButton("Cancel",null);
+                    adb.setNegativeButton("Cancel", null);
                     adb.show();
                 } else {
                     if (text2.length() >= 6 && text.length() <= 16) {
@@ -645,7 +631,7 @@ public class MainScreen extends Activity {
         final LinearLayout navbarItems = new LinearLayout(this);
         final ImageView mainIcon = new ImageView(this);
         final ImageView liveIcon = new ImageView(this);
-        groupIcon=new ImageView(this);
+        groupIcon = new ImageView(this);
         final FrameLayout livePadder = new FrameLayout(this);
         ScrollView contentScroll = new ScrollView(this);
         contentScroll.addView(content);
@@ -684,7 +670,7 @@ public class MainScreen extends Activity {
         liveIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(getApplicationContext(),"Coming Soon...",Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), "Coming Soon...", Toast.LENGTH_LONG).show();
             }
         });
         livePadder.addView(liveIcon);
@@ -815,12 +801,12 @@ public class MainScreen extends Activity {
         noData.setTextSize(32);
         noData.setText("No Data");
         noData.setTextColor(Color.WHITE);
-        final Button addGroups=new Button(this);
+        final Button addGroups = new Button(this);
         //TODO add That button
         addGroups.setText("Add Team To Scouting List");
         addGroups.setBackground(getDrawable(R.drawable.back_2));
         addGroups.setTextColor(Color.parseColor("#22dd22"));
-        addGroups.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Light.Device.screenY(this)/10));
+        addGroups.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Light.Device.screenY(this) / 10));
         addGroups.setTextSize(25);
         addGroups.setTypeface(getTypeface());
         addGroups.setOnClickListener(new View.OnClickListener() {
@@ -836,14 +822,14 @@ public class MainScreen extends Activity {
             @Override
             public void onRead(String s) {
                 try {
-                fullTable.removeAllViews();
-                fullTable.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
-                JSONArray groups = new JSONArray(s);
-                alreadyScouting = groups;
-                for (int g = 0; g < groups.length(); g++) {
-                        fullTable.addView(getGroupListView(groups.getString(g),content));
-                }
-                fullTable.addView(addGroups);
+                    fullTable.removeAllViews();
+                    fullTable.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+                    JSONArray groups = new JSONArray(s);
+                    alreadyScouting = groups;
+                    for (int g = 0; g < groups.length(); g++) {
+                        fullTable.addView(getGroupListView(groups.getString(g), content));
+                    }
+                    fullTable.addView(addGroups);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -948,10 +934,9 @@ public class MainScreen extends Activity {
                         public void onFail() {
                         }
                     });
-                }catch (JSONException e){
+                } catch (JSONException e) {
                     e.printStackTrace();
                 }
-
             }
 
             @Override
@@ -968,7 +953,6 @@ public class MainScreen extends Activity {
                 });
             }
         });
-
     }
 
     private void removeGroup(final String id, final DoAfter doAfter) {
@@ -992,10 +976,9 @@ public class MainScreen extends Activity {
                         public void onFail() {
                         }
                     });
-                }catch (JSONException e){
+                } catch (JSONException e) {
                     e.printStackTrace();
                 }
-
             }
 
             @Override
@@ -1062,7 +1045,7 @@ public class MainScreen extends Activity {
         more.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                viewGroup(id,content);
+                viewGroup(id, content);
             }
         });
         row2.addView(remove);
@@ -1076,23 +1059,31 @@ public class MainScreen extends Activity {
         setAkaOnTextView(aka, id);
         return group;
     }
-    void viewGroup(final String id,final FrameLayout content){
-        final LinearLayout ll=new LinearLayout(this);
+
+    void viewGroup(final String id, final FrameLayout content) {
+        groupIcon.setImageDrawable(getDrawable(R.drawable.ic_home));
+        groupIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                loadAccountData(content);
+            }
+        });
+        final LinearLayout ll = new LinearLayout(this);
         ll.setOrientation(LinearLayout.VERTICAL);
         ll.setGravity(Gravity.CENTER);
-
         as.checkFile(getApplicationContext(), sp.getString("account", null), sp.getString("key", null), id, new AccountServices.OnCheck() {
             @Override
             public void onCheck(boolean b) {
-                if(b){
+                if (b) {
                     as.read(getApplicationContext(), sp.getString("account", null), sp.getString("key", null), id, "config", new AccountServices.OnRead() {
                         @Override
                         public void onRead(String s) {
+                            Log.i("JSON", s);
                             try {
-                                JSONObject teamConf=new JSONObject(s);
-                                for(int type=0;type<temps.size();type++){
-                                    Template t=temps.get(type);
-                                    ll.addView(getTemplate(t,teamConf));
+                                JSONObject teamConf = new JSONObject(s);
+                                for (int type = 0; type < temps.size(); type++) {
+                                    Template t = temps.get(type);
+                                    ll.addView(getTemplate(t, teamConf, id, content));
                                 }
                             } catch (JSONException e) {
                             }
@@ -1102,10 +1093,10 @@ public class MainScreen extends Activity {
                         public void onFail() {
                         }
                     });
-                }else{
-                    for(int type=0;type<temps.size();type++){
-                        Template t=temps.get(type);
-                        ll.addView(getTemplate(t,null));
+                } else {
+                    for (int type = 0; type < temps.size(); type++) {
+                        Template t = temps.get(type);
+                        ll.addView(getTemplate(t, null, id, content));
                     }
                 }
             }
@@ -1117,99 +1108,176 @@ public class MainScreen extends Activity {
         content.removeAllViews();
         content.addView(ll);
     }
-    LinearLayout getTemplate(final Template t, JSONObject teamConfig){
-        int selection=-1;
-        if(teamConfig!=null) {
+
+    void saveTeamConfig(final String group, final String tochange, final String value, final FrameLayout content) {
+        as.read(getApplicationContext(), sp.getString("account", null), sp.getString("key", null), group, "config", new AccountServices.OnRead() {
+            @Override
+            public void onRead(String s) {
+                try {
+                    JSONObject saveable;
+                    if (s != null || !s.equals("")) {
+                        saveable = new JSONObject(s);
+                    } else {
+                        saveable = new JSONObject();
+                    }
+                    saveable.put(tochange, value);
+                    as.write(getApplicationContext(), sp.getString("account", null), sp.getString("key", null), group, "config", saveable.toString(), new AccountServices.OnWrite() {
+                        @Override
+                        public void onWrite() {
+                            viewGroup(group, content);
+                        }
+
+                        @Override
+                        public void onFail() {
+                        }
+                    });
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onFail() {
+                try {
+                    JSONObject saveable = new JSONObject();
+                    saveable.put(tochange, value);
+                    as.write(getApplicationContext(), sp.getString("account", null), sp.getString("key", null), group, "config", saveable.toString(), new AccountServices.OnWrite() {
+                        @Override
+                        public void onWrite() {
+                            viewGroup(group, content);
+                        }
+
+                        @Override
+                        public void onFail() {
+                        }
+                    });
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    void loadOptions(Template t, ArrayList<String> st) {
+        st.addAll(t.options);
+    }
+
+    LinearLayout getTemplate(final Template t, JSONObject teamConfig, final String gid, final FrameLayout content) {
+        final ArrayList<String> nopt = new ArrayList<>();
+        loadOptions(t, nopt);
+        int selection = -1;
+        if (teamConfig != null) {
             if (teamConfig.has(t.name)) {
                 try {
                     String s = teamConfig.getString(t.name);
-                    for (int o = 0; o < t.options.size(); o++) {
-                        if (t.options.get(o).equalsIgnoreCase(s)) {
+                    for (int o = 0; o < nopt.size(); o++) {
+                        if (nopt.get(o).equalsIgnoreCase(s)) {
                             selection = o;
                             break;
                         }
                     }
-                    if(selection==-1){
-                        t.options.add(teamConfig.getString(t.name));
-                        selection=t.options.size()-1;
+                    if (selection == -1) {
+                        nopt.add(teamConfig.getString(t.name));
+                        selection = nopt.size() - 2;
                     }
                 } catch (JSONException e) {
+                    e.printStackTrace();
                 }
+            } else {
+                selection = 0;
             }
-        }else{
-            selection=0;
+        } else {
+            selection = 0;
         }
-        LinearLayout ll=new LinearLayout(this);
+        LinearLayout ll = new LinearLayout(this);
         ll.setOrientation(LinearLayout.VERTICAL);
         ll.setGravity(Gravity.CENTER);
-        TextView name=new TextView(this);
+        TextView name = new TextView(this);
         name.setTypeface(getTypeface());
         name.setTextSize(30);
         name.setTextColor(Color.WHITE);
         name.setText(t.name);
         ll.setBackground(getDrawable(R.drawable.back_transparant));
-        t.options.add("Other");
-        final Button b=new Button(this);
-        b.setText(t.options.get(selection));
+        final Button b = new Button(this);
+        b.setText(nopt.get(selection));
         b.setTypeface(getTypeface());
+        b.setTextSize(25);
+        b.setAllCaps(false);
+        b.setTextColor(Color.WHITE);
         b.setBackground(getDrawable(R.drawable.button));
         name.setGravity(Gravity.CENTER);
-        final int finalS=selection;
         b.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final Dialog d=new Dialog(MainScreen.this);
-                LinearLayout lld=new LinearLayout(getApplicationContext());
+                final Dialog d = new Dialog(MainScreen.this);
+                LinearLayout lld = new LinearLayout(getApplicationContext());
                 lld.setGravity(Gravity.CENTER);
                 lld.setOrientation(LinearLayout.VERTICAL);
                 lld.setBackgroundColor(color);
-                for(int op=0;op<t.options.size();op++){
-                    Button opti=new Button(getApplicationContext());
-                    opti.setLayoutParams(new LinearLayout.LayoutParams((int)(Light.Device.screenX(getApplicationContext())*0.8), (int)(Light.Device.screenY(getApplicationContext())*0.15)));
-                    opti.setText(t.options.get(op));
-                    opti.setTypeface(getTypeface());
-                    opti.setBackground(getDrawable(R.drawable.button));
-                    final int finalOp = op;
-                    if(t.options.get(op).equalsIgnoreCase("Other")){
-                        opti.setOnClickListener(new View.OnClickListener() {
+                lld.setPadding(10, 10, 10, 10);
+                Button other = new Button(getApplicationContext());
+                other.setTextSize(25);
+                other.setAllCaps(false);
+                other.setTextColor(Color.WHITE);
+                other.setTypeface(getTypeface());
+                other.setText("Other");
+                other.setPadding(10, 10, 10, 10);
+                other.setBackground(getDrawable(R.drawable.button));
+                other.setLayoutParams(new LinearLayout.LayoutParams((int) (Light.Device.screenX(getApplicationContext()) * 0.8), (int) (Light.Device.screenY(getApplicationContext()) * 0.1)));
+                other.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        AlertDialog.Builder adb = new AlertDialog.Builder(MainScreen.this);
+                        adb.setTitle("Other");
+                        final EditText extraName = new EditText(getApplicationContext());
+                        extraName.setTypeface(getTypeface());
+                        extraName.setTextSize(24);
+                        adb.setView(extraName);
+                        adb.setPositiveButton("Save", new DialogInterface.OnClickListener() {
                             @Override
-                            public void onClick(View v) {
-                                AlertDialog.Builder adb=new AlertDialog.Builder(MainScreen.this);
-                                adb.setTitle("Other");
-                                final EditText extraName=new EditText(getApplicationContext());
-                                extraName.setTypeface(getTypeface());
-                                extraName.setTextSize(24);
-                                adb.setView(extraName);
-                                adb.setPositiveButton("Save", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-
-                                    }
-                                });
-                                adb.setNegativeButton("Cancel",null);
-                                adb.show();
+                            public void onClick(DialogInterface dialog, int which) {
+                                saveTeamConfig(gid, t.name, extraName.getText().toString(), content);
+                                d.dismiss();
                             }
                         });
+                        adb.setNegativeButton("Cancel", null);
+                        adb.show();
                     }
+                });
+                for (int op = 0; op < nopt.size(); op++) {
+                    Button opti = new Button(getApplicationContext());
+                    opti.setLayoutParams(new LinearLayout.LayoutParams((int) (Light.Device.screenX(getApplicationContext()) * 0.8), (int) (Light.Device.screenY(getApplicationContext()) * 0.1)));
+                    opti.setText(nopt.get(op));
+                    opti.setTypeface(getTypeface());
+                    opti.setTextColor(Color.WHITE);
+                    opti.setTextSize(25);
+                    opti.setAllCaps(false);
+                    opti.setBackground(getDrawable(R.drawable.button));
+                    final int finalOp = op;
                     opti.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            b.setText(t.options.get(finalOp));
+                            b.setText(nopt.get(finalOp));
                             d.dismiss();
+                            saveTeamConfig(gid, t.name, nopt.get(finalOp), content);
                         }
                     });
                     lld.addView(opti);
                 }
-                d.setContentView(lld);
+                lld.addView(other);
+                ScrollView sv = new ScrollView(getApplicationContext());
+                sv.addView(lld);
+                d.setContentView(sv);
                 d.setCancelable(true);
                 d.show();
             }
         });
-        ll.setPadding(25,20,25,20);
+        ll.setPadding(25, 20, 25, 20);
         ll.addView(name);
         ll.addView(b);
         return ll;
     }
+
     void setAkaOnTextView(final TextView aka, String id) {
         if (aka.getText().toString().equals("")) {
             final String soFar = " aka ";
@@ -1229,12 +1297,14 @@ public class MainScreen extends Activity {
     interface DoAfter {
         void doAfter();
     }
-    class Template{
+
+    class Template {
         String name;
-        ArrayList<String> options=new ArrayList<>();
-        public Template(String name,JSONArray opt){
-            this.name=name;
-            for(int i=0;i<opt.length();i++){
+        ArrayList<String> options = new ArrayList<>();
+
+        public Template(String name, JSONArray opt) {
+            this.name = name;
+            for (int i = 0; i < opt.length(); i++) {
                 try {
                     options.add(opt.getString(i));
                 } catch (JSONException e) {
